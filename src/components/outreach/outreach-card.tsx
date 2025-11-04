@@ -4,24 +4,58 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, MapPin, Users, HeartHandshake } from 'lucide-react';
 import { Button } from '../ui/button';
 import Link from 'next/link';
-
-type NewConvert = {
-    name: string;
-    phone: string;
-    status: string;
-    assignedTo: string;
-    notes: string;
-};
+import { UserProfile } from '@/lib/data';
+import { useCollection } from '@/firebase';
+import { collection, query, where, documentId, Firestore } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { useMemo } from 'react';
 
 type OutreachEvent = {
-  id: number;
+  id: string; // Changed from number to string to match Firestore IDs
   title: string;
   date: string;
   location: string;
   status: 'Planned' | 'Ongoing' | 'Completed';
-  newConverts: NewConvert[];
-  participants: { name: string; avatar: string }[];
+  newConverts: any[]; // Kept as any for now, since it's not the focus
+  participantIds: string[];
+  coordinatorId: string;
 };
+
+const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
+  const firestore = useFirestore();
+
+  const participantsQuery = useMemo(() => {
+    if (!firestore || participantIds.length === 0) return null;
+    return query(collection(firestore, 'users'), where(documentId(), 'in', participantIds));
+  }, [firestore, participantIds]);
+
+  const { data: participants, isLoading } = useCollection<UserProfile>(participantsQuery);
+
+  if (isLoading) {
+    return <div className="h-8 w-full animate-pulse bg-muted rounded-md" />;
+  }
+
+  if (!participants || participants.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center justify-center -space-x-2">
+      {participants.slice(0, 5).map((p) => (
+        <Avatar key={p.uid} className="h-8 w-8 border-2 border-background">
+          <AvatarImage src={p.photoURL} data-ai-hint="person face" />
+          <AvatarFallback>{p.name?.charAt(0)}</AvatarFallback>
+        </Avatar>
+      ))}
+      {participants.length > 5 && (
+        <Avatar className="h-8 w-8 border-2 border-background">
+          <AvatarFallback>+{participants.length - 5}</AvatarFallback>
+        </Avatar>
+      )}
+    </div>
+  );
+};
+
 
 export function OutreachCard({ event }: { event: OutreachEvent }) {
   const statusVariantMap: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
@@ -38,34 +72,22 @@ export function OutreachCard({ event }: { event: OutreachEvent }) {
             <Badge variant={statusVariantMap[event.status]} className={event.status === 'Ongoing' ? 'bg-primary text-primary-foreground' : ''}>{event.status}</Badge>
         </div>
         <CardDescription className="flex items-center gap-4 text-sm pt-2">
-            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {event.date}</span>
+            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}</span>
             <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {event.location}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
         <div className="flex items-center justify-around text-center">
             <div>
-                <p className="font-bold text-2xl">{event.participants.length}</p>
+                <p className="font-bold text-2xl">{event.participantIds.length}</p>
                 <p className="text-sm text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4" /> Reachers</p>
             </div>
             <div>
-                <p className="font-bold text-2xl">{event.newConverts.length}</p>
+                <p className="font-bold text-2xl">{event.newConverts?.length || 0}</p>
                 <p className="text-sm text-muted-foreground flex items-center gap-1"><HeartHandshake className="h-4 w-4" /> Converts</p>
             </div>
         </div>
-         <div className="flex items-center justify-center -space-x-2">
-            {event.participants.slice(0, 5).map((p) => (
-              <Avatar key={p.name} className="h-8 w-8 border-2 border-background">
-                <AvatarImage src={p.avatar} data-ai-hint="person face"/>
-                <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-            ))}
-            {event.participants.length > 5 && (
-                <Avatar className="h-8 w-8 border-2 border-background">
-                    <AvatarFallback>+{event.participants.length - 5}</AvatarFallback>
-                </Avatar>
-            )}
-        </div>
+         <OutreachParticipants participantIds={event.participantIds} />
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">

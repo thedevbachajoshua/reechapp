@@ -15,21 +15,26 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '../ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { UserProfile } from '@/lib/data';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
+import { Badge } from '../ui/badge';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
   description: z.string().min(10, { message: 'Description is too short.' }),
   location: z.string().min(3, { message: 'Location is required.' }),
   date: z.date({ required_error: 'A date is required.' }),
+  participantIds: z.array(z.string()).min(1, { message: 'You must select at least one participant.' }),
 });
 
 type CreateOutreachFormProps = {
@@ -39,7 +44,11 @@ type CreateOutreachFormProps = {
 export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { user } = useUserContext();
+  const { user, userProfile } = useUserContext();
+
+  const { data: reachers, isLoading: isLoadingReachers } = useCollection<UserProfile>(
+    firestore ? query(collection(firestore, 'users'), where('role', '==', 'Reacher')) : null
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,17 +56,23 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
       title: '',
       description: '',
       location: '',
+      participantIds: userProfile?.role === 'Supervisor' ? [user!.uid] : [],
     },
   });
+  
+  const selectedParticipantIds = form.watch('participantIds') || [];
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore || !user) return;
     
+    // Ensure the coordinator is always a participant
+    const finalParticipantIds = [...new Set([...values.participantIds, user.uid])];
+
     const newOutreach = {
         ...values,
         date: values.date.toISOString(),
         coordinatorId: user.uid,
-        participantIds: [user.uid],
+        participantIds: finalParticipantIds,
         status: 'Planned',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -163,6 +178,72 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
             )}
             />
         </div>
+
+        <FormField
+          control={form.control}
+          name="participantIds"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Assign Reachers</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                       <div className="flex gap-1 flex-wrap">
+                        {reachers
+                          ?.filter(r => selectedParticipantIds.includes(r.uid))
+                          .map(r => <Badge variant="secondary" key={r.uid}>{r.name}</Badge>)
+                        ?? 'Select Reachers'}
+                        {selectedParticipantIds.length === 0 && 'Select Reachers...'}
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search reachers..." />
+                    <CommandEmpty>No reachers found.</CommandEmpty>
+                    <CommandGroup>
+                      {reachers?.map((reacher) => (
+                        <CommandItem
+                          value={reacher.name}
+                          key={reacher.uid}
+                          onSelect={() => {
+                            const currentIds = field.value || [];
+                            const newIds = currentIds.includes(reacher.uid)
+                              ? currentIds.filter((id) => id !== reacher.uid)
+                              : [...currentIds, reacher.uid];
+                            field.onChange(newIds);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              field.value?.includes(reacher.uid)
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          {reacher.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <div className="flex justify-end pt-4">
           <Button type="submit">Create Outreach</Button>
         </div>
