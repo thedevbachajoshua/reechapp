@@ -37,6 +37,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     // If user is not logged in and not on an auth page, redirect to login.
     if (!user && !isAuthPage) {
+      setIsRedirecting(true);
       router.push('/login');
       return;
     }
@@ -46,8 +47,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    // If user is logged in but has no profile/role, redirect to role selection.
-    if (user && !userProfile && !isProfileLoading && pathname !== '/role-selection') {
+    // If user is logged in but has no profile/role, redirect to role selection,
+    // but only if we are not already on an auth page.
+    if (user && !userProfile && !isProfileLoading && !isAuthPage) {
         setIsRedirecting(true);
         router.push('/role-selection');
     } else if (user && userProfile) {
@@ -58,8 +60,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const loading = isAuthLoading || isProfileLoading || isRedirecting;
   const isAuthPage = pathname === '/login' || pathname === '/role-selection';
 
-  // If we are on an auth page, we don't need to show the global loader
-  // unless we are performing the initial user check.
   if (loading && !isAuthPage) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
