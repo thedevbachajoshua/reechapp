@@ -49,6 +49,7 @@ export function LoginForm() {
     } catch (error) {
       const authError = error as AuthError;
       // If sign-in fails because the user doesn't exist, create a new account.
+      // Firebase returns 'auth/invalid-credential' for both wrong password and user not found.
       if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
         try {
           await createUserWithEmailAndPassword(auth, values.email, values.password);
