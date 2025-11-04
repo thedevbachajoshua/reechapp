@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { addDoc, collection, Timestamp, getDocs } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, query, where } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
 import {
   Command,
@@ -42,12 +42,15 @@ import {
 } from '@/components/ui/command';
 import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
 import { Input } from '../ui/input';
+import { Contact } from '@/app/dashboard/contacts/page';
+
 
 const formSchema = z.object({
   contact: z.object({
       id: z.string(),
       name: z.string(),
       photoURL: z.string().optional(),
+      phone: z.string(),
     }).nullable().refine(val => val !== null, { message: 'You must select a contact.' }),
   message: z.string().min(10, { message: 'Message is too short.' }),
   scheduledForDate: z.date({ required_error: 'A date is required.' }),
@@ -58,14 +61,6 @@ type ScheduleFollowUpFormProps = {
   onFinished: () => void;
 };
 
-// This represents a simplified contact from a subcollection
-type SimpleContact = {
-  id: string;
-  name: string;
-  phone: string;
-  outreachId: string;
-  photoURL?: string; // Let's assume a photoURL for avatar
-};
 
 export function ScheduleFollowUpForm({
   onFinished,
@@ -76,54 +71,12 @@ export function ScheduleFollowUpForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
-  // In a larger app, you might fetch from a unified 'contacts' collection
-  // For now, we'll fetch from all 'new_converts' subcollections
-  const newConvertsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'outreaches') : null),
-    [firestore]
-  );
-  // This is not ideal as it fetches all outreach docs just to get subcollections.
-  // A better structure would be a top-level contacts collection.
-  // For this example, we'll proceed. A full implementation should improve this.
-  const { data: outreaches } = useCollection(newConvertsQuery);
+  const contactsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'contacts'), where('ownerId', '==', user.uid));
+  }, [firestore, user]);
 
-  const [allContacts, setAllContacts] = useState<SimpleContact[]>([]);
-
-  React.useEffect(() => {
-    if (!outreaches || !firestore) return;
-    
-    const fetchContacts = async () => {
-        const contactsPromises = outreaches.map(o => getDocs(collection(firestore, 'outreaches', o.id, 'new_converts')));
-        const contactsSnapshots = await Promise.all(contactsPromises);
-        const contacts: SimpleContact[] = [];
-        contactsSnapshots.forEach((snap, index) => {
-            snap.forEach(doc => {
-                contacts.push({
-                    id: doc.id,
-                    ...doc.data(),
-                    outreachId: outreaches[index].id,
-                    photoURL: `https://picsum.photos/seed/${doc.id}/40/40` // placeholder
-                } as SimpleContact)
-            })
-        });
-       // A real implementation would use Promise.allSettled and handle errors
-       // and also fetch from a unified contacts collection instead of subcollections.
-       // For now, this demonstrates the concept.
-    }
-    // This is a simplified fetch and doesn't listen for real-time updates.
-    // In a real app, you would manage this more robustly.
-    // For now, we assume contacts don't change while the form is open.
-
-  }, [outreaches, firestore]);
-  
-    // HACK: Because we can't easily query all subcollections, we'll just use mock data for contacts.
-    // This should be replaced with a proper query in a real application.
-    const mockContacts: SimpleContact[] = [
-        { id: 'mock1', name: 'Peter Jones', phone: '123-456-7890', outreachId: 'mock-outreach', photoURL: 'https://picsum.photos/seed/followup1/40/40'},
-        { id: 'mock2', name: 'Mary Williams', phone: '234-567-8901', outreachId: 'mock-outreach', photoURL: 'https://picsum.photos/seed/followup2/40/40'},
-        { id: 'mock3', name: 'David Miller', phone: '345-678-9012', outreachId: 'mock-outreach', photoURL: 'https://picsum.photos/seed/followup3/40/40'},
-    ];
-
+  const { data: contacts, isLoading: isLoadingContacts } = useCollection<Contact>(contactsQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -142,8 +95,11 @@ export function ScheduleFollowUpForm({
     }
     setIsAiLoading(true);
     try {
+      // The 'outreachTitle' and 'contactDetails' are generic for now.
+      // In a more advanced version, we could pull this from the contact's record.
       const result = await sendFollowUpMessage({
         contactName: contact.name,
+        contactPhoneNumber: contact.phone, 
         contactDetails: 'A new believer met at a recent event.',
         outreachTitle: 'a REECH outreach event',
       });
@@ -166,7 +122,7 @@ export function ScheduleFollowUpForm({
     const newFollowUp = {
       contactId: values.contact.id,
       contactName: values.contact.name,
-      contactAvatar: values.contact.photoURL || `https://picsum.photos/seed/${values.contact.id}/40/40`,
+      contactAvatar: `https://picsum.photos/seed/${values.contact.id}/40/40`,
       message: values.message,
       scheduledFor: Timestamp.fromDate(scheduledDateTime),
       status: 'Scheduled',
@@ -221,14 +177,21 @@ export function ScheduleFollowUpForm({
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
                     <CommandInput placeholder="Search contacts..." />
-                    <CommandEmpty>No contacts found.</CommandEmpty>
+                    <CommandEmpty>
+                        {isLoadingContacts ? 'Loading contacts...' : 'No contacts found.'}
+                    </CommandEmpty>
                     <CommandGroup>
-                      {mockContacts.map(c => (
+                      {contacts?.map(c => (
                         <CommandItem
                           value={c.name}
                           key={c.id}
                           onSelect={() => {
-                            form.setValue('contact', c);
+                            form.setValue('contact', {
+                                id: c.id,
+                                name: c.name,
+                                phone: c.phone,
+                                photoURL: `https://picsum.photos/seed/${c.id}/40/40`
+                            });
                           }}
                         >
                           <Check
