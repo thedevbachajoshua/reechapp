@@ -21,11 +21,14 @@ const formSchema = z.object({
   phone: z.string().optional(),
 });
 
+export type NewContact = z.infer<typeof formSchema>;
+
 type AddContactFormProps = {
+  onContactAdd: (contact: NewContact) => void;
   onFinished: () => void;
 };
 
-export function AddContactForm({ onFinished }: AddContactFormProps) {
+export function AddContactForm({ onContactAdd, onFinished }: AddContactFormProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,12 +40,13 @@ export function AddContactForm({ onFinished }: AddContactFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    onContactAdd(values);
     toast({
       title: "Contact Added",
       description: `${values.name} has been added to your contacts.`,
     });
     onFinished();
+    form.reset();
   }
 
   return (

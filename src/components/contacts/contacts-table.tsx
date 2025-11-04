@@ -9,7 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { contacts as initialContacts, Contact } from '@/lib/data';
+import { Contact } from '@/lib/data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +17,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import type { Dispatch, SetStateAction } from 'react';
 
 const statuses = ['New', 'Contacted', 'In Progress', 'Follow-up'];
 
@@ -33,9 +33,12 @@ const statusConfig: Record<Status, { variant: 'default' | 'secondary' | 'outline
   'Follow-up': { variant: 'destructive' },
 };
 
+type ContactsTableProps = {
+  contacts: Contact[];
+  setContacts: Dispatch<SetStateAction<Contact[]>>;
+}
 
-export function ContactsTable() {
-  const [contacts, setContacts] = useState<Contact[]>(initialContacts);
+export function ContactsTable({ contacts, setContacts }: ContactsTableProps) {
   const { toast } = useToast();
 
   const handleStatusChange = (contactId: number, newStatus: string) => {
