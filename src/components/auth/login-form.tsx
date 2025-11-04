@@ -19,11 +19,11 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
 export function LoginForm() {
@@ -43,20 +43,41 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      // First, try to sign in the user
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged will handle the redirect
+      // onAuthStateChanged in UserProvider will handle the redirect
     } catch (error: any) {
-        console.error(error);
-        let errorMessage = 'An unexpected error occurred during sign-in.';
-        if (error.code === AuthErrorCodes.INVALID_LOGIN_CREDENTIALS) {
-            errorMessage = 'Invalid email or password. Please try again.';
+      // If sign-in fails because of invalid credentials, try to create a new user
+      if (error.code === AuthErrorCodes.INVALID_LOGIN_CREDENTIALS) {
+        try {
+          await createUserWithEmailAndPassword(auth, values.email, values.password);
+          // New user created. onAuthStateChanged will redirect them to role selection.
+          toast({
+            title: 'Welcome!',
+            description: 'Your account has been created. Please choose your role.',
+          });
+        } catch (signUpError: any) {
+          // Handle sign-up errors (e.g., email already in use with a different credential type)
+          let errorMessage = 'An unexpected error occurred during sign-up.';
+           if (signUpError.code === AuthErrorCodes.EMAIL_EXISTS) {
+            errorMessage = 'This email is already in use. Please try signing in.';
+          }
+          toast({
+            variant: 'destructive',
+            title: 'Sign-Up Failed',
+            description: errorMessage,
+          });
+          setIsLoading(false);
         }
-      toast({
-        variant: 'destructive',
-        title: 'Authentication Failed',
-        description: errorMessage,
-      });
-      setIsLoading(false);
+      } else {
+        // Handle other sign-in errors
+        toast({
+          variant: 'destructive',
+          title: 'Authentication Failed',
+          description: 'An unexpected error occurred. Please try again.',
+        });
+        setIsLoading(false);
+      }
     }
   }
 
@@ -100,7 +121,7 @@ export function LoginForm() {
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              Sign In or Create Account
             </Button>
           </CardFooter>
         </form>
