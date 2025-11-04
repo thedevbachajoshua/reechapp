@@ -13,10 +13,9 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user, userProfile, loading } = useUserContext();
+  const { user, userProfile, loading, forceRefresh } = useUserContext();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const auth = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveChanges = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -36,6 +35,9 @@ export default function SettingsPage() {
     try {
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, updatedProfile, { merge: true });
+
+      // Force a refresh of the user context to show the new data
+      await forceRefresh();
 
       toast({
         title: 'Profile Updated',

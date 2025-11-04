@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Shield, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useUserContext } from '@/context/user-context';
 
 type Role = 'Supervisor' | 'Reacher';
 
@@ -19,6 +20,7 @@ export default function RoleSelectionPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { forceRefresh } = useUserContext();
 
   const handleRoleSelection = async () => {
     if (!selectedRole || !auth.currentUser || !firestore) return;
@@ -35,16 +37,16 @@ export default function RoleSelectionPage() {
     
     try {
       const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
-      // Use await to ensure the document is saved before we proceed.
       await setDoc(userDocRef, userProfile, { merge: true });
+      
+      // Force the context to refetch the user profile
+      await forceRefresh();
       
       toast({
         title: 'Role Selected',
         description: `You are now a ${selectedRole}. Redirecting to dashboard...`,
       });
 
-      // The UserProvider will now see the new role and automatically handle the redirect.
-      // A hard push can still be useful as a fallback.
       router.push('/dashboard');
     } catch (error) {
       console.error('Error setting user role:', error);
