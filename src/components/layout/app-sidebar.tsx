@@ -24,24 +24,37 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useUserContext } from '@/context/user-context';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
-const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/outreaches', label: 'Outreaches', icon: Flame },
-  { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
-  { href: '/dashboard/follow-ups', label: 'Follow-ups', icon: MessageSquare },
-  { href: '/dashboard/feed', label: 'Discipleship Feed', icon: BookOpen },
-  { href: '/dashboard/ai-encouragement', label: 'AI Encouragement', icon: Sparkles },
+const allMenuItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Supervisor', 'Reacher'] },
+  { href: '/dashboard/outreaches', label: 'Outreaches', icon: Flame, roles: ['Supervisor', 'Reacher'] },
+  { href: '/dashboard/contacts', label: 'Contacts', icon: Users, roles: ['Supervisor', 'Reacher'] },
+  { href: '/dashboard/follow-ups', label: 'Follow-ups', icon: MessageSquare, roles: ['Supervisor'] },
+  { href: '/dashboard/feed', label: 'Discipleship Feed', icon: BookOpen, roles: ['Supervisor', 'Reacher'] },
+  { href: '/dashboard/ai-encouragement', label: 'AI Encouragement', icon: Sparkles, roles: ['Supervisor'] },
 ];
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
+  const { user, userProfile } = useUserContext();
+  const auth = useAuth();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+    handleLinkClick();
+  };
 
   const handleLinkClick = () => {
     setOpenMobile(false);
   };
+  
+  const menuItems = allMenuItems.filter(item => userProfile?.role && item.roles.includes(userProfile.role));
 
 
   return (
@@ -79,7 +92,7 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Settings" onClick={handleLinkClick}>
-              <Link href="#">
+              <Link href="/dashboard/settings">
                 <Settings />
                 <span>Settings</span>
               </Link>
@@ -88,13 +101,13 @@ export default function AppSidebar() {
         </SidebarMenu>
         <div className="flex items-center gap-3 p-2 mt-2 rounded-md bg-sidebar-accent/50">
           <Avatar>
-            <AvatarImage src="https://picsum.photos/seed/coordinator/40/40" data-ai-hint="person face" />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarImage src={userProfile?.photoURL ?? ''} data-ai-hint="person face" />
+            <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="truncate font-semibold text-sm">John Doe</p>
+            <p className="truncate font-semibold text-sm">{userProfile?.name ?? 'User'}</p>
             <p className="truncate text-xs text-sidebar-foreground/70">
-              john.doe@reach.org
+              {user?.email ?? ''}
             </p>
           </div>
           <SidebarMenuButton 
@@ -102,10 +115,7 @@ export default function AppSidebar() {
             variant="ghost" 
             className="h-7 w-7" 
             tooltip="Log Out"
-            onClick={() => {
-              handleLinkClick();
-              router.push('/login');
-            }}>
+            onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
           </SidebarMenuButton>
         </div>

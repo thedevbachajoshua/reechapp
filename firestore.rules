@@ -1,29 +1,26 @@
 /**
- * @file Firestore Security Rules for the Outreach feature.
+ * @file Firestore Security Rules for the Outreach feature with role-based access.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for outreach events,
- * where coordinators have full control over their events and participants have read-only access.
- * New converts are managed within the scope of their associated outreach event,
- * with access controlled by the coordinator and assigned reachers.
+ * This ruleset enforces a strict user-ownership and role-based model.
+ * Supervisors have broad permissions to manage outreaches and users.
+ * Reachers have limited permissions focused on their assigned tasks.
  *
  * Data Structure:
+ * - /users/{userId}: User profile documents, containing a 'role' field ('Supervisor' or 'Reacher').
  * - /outreaches/{outreachId}: Outreach events.
- *   - `coordinatorId` is the user ID of the event creator.
- *   - `participantIds` is an array of user IDs who are participants.
+ *   - `coordinatorId` is the user ID of the event creator (a Supervisor).
+ *   - `participantIds` is an array of user IDs of assigned Reachers.
  * - /outreaches/{outreachId}/new_converts/{newConvertId}: New converts for an event.
  *   - `assignedTo` is the `userId` of the reacher assigned to follow up.
  *
  * Key Security Decisions:
- * - Coordinators can create, update, and delete outreach events they own.
- * - Participants have read-only access to outreach events they are part of.
- * - Coordinators and assigned reachers can manage new converts within their outreach events.
- * - Listing outreach events is restricted to coordinators and participants.
- * - Listing new converts is restricted to participants of the outreach event.
- *
- * Denormalization for Authorization:
- * - The `coordinatorId` and `participantIds` fields within `outreaches` documents and the `assignedTo` field within
- *   `new_converts` documents eliminate the need for costly `get()` calls to verify ownership or association.
+ * - User profile data is readable by any authenticated user, but only writable by the user themselves.
+ *   The 'role' field cannot be changed by the user after it has been set.
+ * - Supervisors can create, read, update, and delete any outreach event.
+ * - Reachers can only read outreach events they are a participant in.
+ * - Supervisors can manage new converts in any outreach.
+ * - Reachers can create new converts and update converts assigned to them.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -37,50 +34,54 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isSupervisor() {
+      return isSignedIn() && getUserData(request.auth.uid).role == 'Supervisor';
+    }
+
+    function isReacher() {
+        return isSignedIn() && getUserData(request.auth.uid).role == 'Reacher';
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && !exists(/databases/$(database)/documents/users/$(userId));
+      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
+    }
+
     match /outreaches/{outreachId} {
       function isParticipant() {
-        return resource.data.participantIds.hasAny([request.auth.uid]);
-      }
-      
-      function isCoordinator() {
-        return isOwner(resource.data.coordinatorId);
+        return isSignedIn() && resource.data.participantIds.hasAny([request.auth.uid]);
       }
 
-      allow read: if isSignedIn() && (isCoordinator() || isParticipant());
-      allow list: if isSignedIn();
+      allow read: if isSupervisor() || isParticipant();
+      allow list: if isSignedIn(); // Filtered on the client
 
-      allow create: if isSignedIn()
-                    && request.resource.data.coordinatorId == request.auth.uid;
+      allow create: if isSupervisor();
 
-      allow update, delete: if isSignedIn() && isCoordinator();
+      allow update, delete: if isSupervisor();
     }
 
     match /outreaches/{outreachId}/new_converts/{newConvertId} {
-      function getOutreach() {
-        return get(/databases/$(database)/documents/outreaches/$(outreachId));
-      }
-
       function isOutreachParticipant() {
-        let outreach = getOutreach();
-        return outreach.data.participantIds.hasAny([request.auth.uid]);
-      }
-      
-      function isOutreachCoordinator() {
-        let outreach = getOutreach();
-        return outreach.data.coordinatorId == request.auth.uid;
+          let outreach = get(/databases/$(database)/documents/outreaches/$(outreachId));
+          return isSignedIn() && outreach.data.participantIds.hasAny([request.auth.uid]);
       }
 
       function isAssignedReacher() {
-        return resource.data.assignedTo == request.auth.uid;
+        return isSignedIn() && resource.data.assignedTo == request.auth.uid;
       }
 
-      allow read, list: if isSignedIn() && (isOutreachCoordinator() || isOutreachParticipant());
+      allow read, list: if isSupervisor() || isOutreachParticipant();
       
-      allow create: if isSignedIn() && (isOutreachCoordinator() || isOutreachParticipant());
+      allow create: if isSupervisor() || isOutreachParticipant();
 
-      allow update: if isSignedIn() && (isOutreachCoordinator() || isAssignedReacher());
+      allow update: if isSupervisor() || isAssignedReacher();
 
-      allow delete: if isSignedIn() && isOutreachCoordinator();
+      allow delete: if isSupervisor();
     }
   }
 }

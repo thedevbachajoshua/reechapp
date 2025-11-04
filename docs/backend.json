@@ -1,5 +1,19 @@
 {
   "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Profile",
+      "description": "Stores user profile information, including their role.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID from Firebase Auth." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "name": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "format": "uri", "description": "URL of the user's profile picture." },
+        "role": { "type": "string", "enum": ["Supervisor", "Reacher"], "description": "The user's role in the application." }
+      },
+      "required": ["uid", "email", "role"]
+    },
     "Outreach": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Outreach",
@@ -120,12 +134,21 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
     "structure": [
+       {
+        "path": "users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information including their assigned role."
+        }
+      },
       {
         "path": "outreaches/{outreachId}",
         "definition": {
@@ -163,6 +186,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the Outreach feature, focusing on authorization independence, clarity, and scalability. It leverages denormalization to avoid complex security rules that require `get()` calls. \n\n`outreaches/{outreachId}`:\nThis path stores outreach events. The `coordinatorId` and `participantIds` are stored directly in the document to allow for security rules to check for ownership and participation without extra database reads. \n\n`outreaches/{outreachId}/new_converts/{newConvertId}`:\nThis structure enables each outreach event to manage its new converts. The `new_converts` subcollection is designed to store contact information and follow-up notes for each new convert. The `outreachId` is denormalized within each `new_converts` document to enforce the relationship. The `assignedTo` field within the `new_converts` documents stores the `userId` of the reacher assigned to follow up with the new convert."
+    "reasoning": "The Firestore data structure is designed to support role-based access control. The new 'users' collection stores a 'role' for each user. This role is checked in security rules to grant appropriate permissions for accessing 'outreaches' and 'new_converts' data. Denormalization is still used to avoid extra `get()` calls where possible."
   }
 }

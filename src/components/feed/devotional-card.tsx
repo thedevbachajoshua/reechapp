@@ -7,13 +7,14 @@ type Post = {
     id: number;
     title: string;
     author: string;
+    authorAvatar?: string;
     image: string;
     imageHint: string;
     content: string;
 };
   
 export function DevotionalCard({ post }: { post: Post }) {
-    const authorAvatar = post.author === 'John Doe' ? 'https://picsum.photos/seed/coordinator/40/40' : `https://picsum.photos/seed/${post.author.split(' ')[0]}/40/40`;
+    const authorAvatar = post.authorAvatar || `https://picsum.photos/seed/${post.author.split(' ')[0]}/40/40`;
     const authorFallback = post.author.split(' ').map(n => n[0]).join('');
 
     return (
@@ -22,7 +23,7 @@ export function DevotionalCard({ post }: { post: Post }) {
             <Image
                 src={post.image}
                 alt={post.title}
-                layout="fill"
+                fill
                 objectFit="cover"
                 data-ai-hint={post.imageHint}
             />

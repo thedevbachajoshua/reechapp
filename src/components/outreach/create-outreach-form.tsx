@@ -20,6 +20,10 @@ import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection } from 'firebase/firestore';
+import { useUserContext } from '@/context/user-context';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -34,6 +38,9 @@ type CreateOutreachFormProps = {
 
 export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const { user } = useUserContext();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,7 +51,22 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    if (!firestore || !user) return;
+    
+    const newOutreach = {
+        ...values,
+        date: values.date.toISOString(),
+        coordinatorId: user.uid,
+        participantIds: [user.uid],
+        status: 'Planned',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        newConverts: [],
+    };
+
+    const outreachesCollection = collection(firestore, 'outreaches');
+    addDocumentNonBlocking(outreachesCollection, newOutreach);
+    
     toast({
       title: "Outreach Created!",
       description: `${values.title} has been scheduled.`,

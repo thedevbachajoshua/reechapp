@@ -17,6 +17,9 @@ import {
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/firebase';
+import { signInWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -26,6 +29,8 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const auth = useAuth();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,13 +40,24 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Simulate API call and successful login
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1000);
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // onAuthStateChanged will handle the redirect
+    } catch (error: any) {
+        console.error(error);
+        let errorMessage = 'An unexpected error occurred during sign-in.';
+        if (error.code === AuthErrorCodes.INVALID_LOGIN_CREDENTIALS) {
+            errorMessage = 'Invalid email or password. Please try again.';
+        }
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Failed',
+        description: errorMessage,
+      });
+      setIsLoading(false);
+    }
   }
 
   return (

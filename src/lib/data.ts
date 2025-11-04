@@ -93,7 +93,17 @@ export const stats = [
     { id: 3, contactName: 'David Miller', contactAvatar: 'https://picsum.photos/seed/followup3/40/40', scheduledFor: 'June 18, 2024', message: 'David, looking forward to connecting soon. Praying for you!', status: 'Scheduled' },
   ];
   
-  export const devotionalPosts = [
+  export type DevotionalPost = {
+      id: number;
+      title: string;
+      author: string;
+      authorAvatar?: string;
+      image: string;
+      imageHint: string;
+      content: string;
+  };
+
+  export const devotionalPosts: DevotionalPost[] = [
     { id: 1, title: 'Finding Strength in His Word', author: 'John Doe', image: 'https://picsum.photos/seed/devotional1/600/400', imageHint: 'faith journey', content: 'Discover how daily scripture can be your anchor in life\'s storms. Let\'s explore Psalms 46 together and find unshakable hope.' },
     { id: 2, title: 'The Community of Believers', author: 'Jane Doe', image: 'https://picsum.photos/seed/devotional4/600/400', imageHint: 'community fellowship', content: 'We are not meant to walk this path alone. Hebrews 10:24-25 calls us to gather, encourage, and build each other up in faith and love.' },
     { id: 3, title: 'A Heart of Gratitude', author: 'Emily White', image: 'https://picsum.photos/seed/devotional3/600/400', imageHint: 'spiritual growth', content: 'Cultivating gratitude transforms our perspective. Join us in reflecting on 1 Thessalonians 5:18 and the power of giving thanks in all circumstances.' },
@@ -157,3 +167,11 @@ export const stats = [
     },
   ];
   
+
+export type UserProfile = {
+    uid: string;
+    email: string;
+    name: string;
+    photoURL?: string;
+    role: 'Supervisor' | 'Reacher';
+};
