@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, getDocs } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
 import {
   Command,
@@ -93,7 +93,7 @@ export function ScheduleFollowUpForm({
     if (!outreaches || !firestore) return;
     
     const fetchContacts = async () => {
-        const contactsPromises = outreaches.map(o => getDoc(collection(firestore, 'outreaches', o.id, 'new_converts')));
+        const contactsPromises = outreaches.map(o => getDocs(collection(firestore, 'outreaches', o.id, 'new_converts')));
         const contactsSnapshots = await Promise.all(contactsPromises);
         const contacts: SimpleContact[] = [];
         contactsSnapshots.forEach((snap, index) => {
@@ -317,7 +317,9 @@ export function ScheduleFollowUpForm({
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={date => date < new Date()}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
                       initialFocus
                     />
                   </PopoverContent>

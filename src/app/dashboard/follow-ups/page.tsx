@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,8 @@ import {
   Timestamp,
   query,
   orderBy,
+  doc,
+  updateDoc,
 } from 'firebase/firestore';
 import { ScheduleFollowUpForm } from '@/components/follow-ups/schedule-follow-up-form';
 
@@ -44,6 +47,7 @@ export type FollowUp = {
 export default function FollowUpsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const followUpsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -51,6 +55,25 @@ export default function FollowUpsPage() {
   }, [firestore]);
 
   const { data: followUps, isLoading } = useCollection<FollowUp>(followUpsQuery);
+
+  const handleSendNow = async (followUpId: string) => {
+    if (!firestore) return;
+    const followUpRef = doc(firestore, 'scheduled_follow_ups', followUpId);
+    try {
+      await updateDoc(followUpRef, { status: 'Sent' });
+      toast({
+        title: 'Message Sent!',
+        description: 'The follow-up has been marked as sent.',
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not send the message.',
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -122,7 +145,7 @@ export default function FollowUpsPage() {
                 <blockquote className="text-sm text-muted-foreground border-l-2 pl-3 italic line-clamp-3 mb-4">
                   {followUp.message}
                 </blockquote>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <Badge
                     variant={followUp.status === 'Sent' ? 'secondary' : 'default'}
                     className={
@@ -138,9 +161,21 @@ export default function FollowUpsPage() {
                     )}
                     {followUp.status}
                   </Badge>
-                  {/* In a real app, a sent message could be viewed, and a failed one could be retried */}
                 </div>
               </CardContent>
+               {followUp.status === 'Scheduled' && (
+                <CardFooter>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleSendNow(followUp.id)}
+                    >
+                        <Send className="mr-2 h-4 w-4" />
+                        Send Now
+                    </Button>
+                </CardFooter>
+               )}
             </Card>
           ))}
         </div>
