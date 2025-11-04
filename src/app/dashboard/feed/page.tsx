@@ -6,7 +6,7 @@ import { devotionalPosts as initialPosts } from '@/lib/data';
 import { PlusCircle } from 'lucide-react';
 import { useUserContext } from '@/context/user-context';
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
