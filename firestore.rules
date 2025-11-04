@@ -48,8 +48,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      // Allow user to create their own profile, but not change their role once set.
-      allow write: if isOwner(userId) && (!exists(path) || request.resource.data.role == resource.data.role);
+      // Allow user to write to their own document.
+      allow write: if isOwner(userId);
     }
 
     match /outreaches/{outreachId} {
