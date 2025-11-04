@@ -70,8 +70,17 @@ export const stats = [
       avatar: 'https://picsum.photos/seed/avatar3/40/40'
     }
   ];
+
+  export type Contact = {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    status: string;
+    dateAdded: string;
+  };
   
-  export const contacts = [
+  export const contacts: Contact[] = [
     { id: 1, name: 'Peter Jones', email: 'peter.j@example.com', phone: '123-456-7890', status: 'New', dateAdded: '2023-06-01' },
     { id: 2, name: 'Mary Williams', email: 'mary.w@example.com', phone: '234-567-8901', status: 'In Progress', dateAdded: '2023-05-28' },
     { id: 3, name: 'David Miller', email: 'david.m@example.com', phone: '345-678-9012', status: 'Contacted', dateAdded: '2023-05-25' },
