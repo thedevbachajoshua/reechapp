@@ -17,8 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  phone: z.string().optional(),
+  email: z.string().email({ message: 'Please enter a valid email.' }).optional().or(z.literal('')),
+  phone: z.string().min(10, { message: 'A valid phone number is required.' }),
 });
 
 export type NewContact = z.infer<typeof formSchema>;
@@ -67,12 +67,12 @@ export function AddContactForm({ onContactAdd, onFinished }: AddContactFormProps
         />
         <FormField
           control={form.control}
-          name="email"
+          name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input placeholder="name@example.com" {...field} />
+                <Input placeholder="123-456-7890" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -80,12 +80,12 @@ export function AddContactForm({ onContactAdd, onFinished }: AddContactFormProps
         />
         <FormField
           control={form.control}
-          name="phone"
+          name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone (Optional)</FormLabel>
+              <FormLabel>Email (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="123-456-7890" {...field} />
+                <Input placeholder="name@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

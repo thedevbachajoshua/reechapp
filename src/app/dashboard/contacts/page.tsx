@@ -20,8 +20,8 @@ import { collection, query, where, addDoc } from 'firebase/firestore';
 export type Contact = {
   id: string;
   name: string;
-  email: string;
-  phone?: string;
+  email?: string;
+  phone: string;
   status: string;
   dateAdded: string;
   ownerId: string;

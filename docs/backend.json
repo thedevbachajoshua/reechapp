@@ -168,7 +168,7 @@
           "description": "The UID of the user who owns this contact."
         }
       },
-      "required": [ "name", "email", "status", "dateAdded", "ownerId" ]
+      "required": [ "name", "phone", "status", "dateAdded", "ownerId" ]
     },
     "ScheduledFollowUp": {
       "$schema": "http://json-schema.org/draft-07/schema#",
