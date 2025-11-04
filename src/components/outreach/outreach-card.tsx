@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,8 +8,7 @@ import Link from 'next/link';
 import { UserProfile } from '@/lib/data';
 import { useCollection } from '@/firebase';
 import { collection, query, where, documentId, Firestore } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
-import { useMemo } from 'react';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 
 type OutreachEvent = {
   id: string; // Changed from number to string to match Firestore IDs
@@ -24,8 +24,8 @@ type OutreachEvent = {
 const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
   const firestore = useFirestore();
 
-  const participantsQuery = useMemo(() => {
-    if (!firestore || participantIds.length === 0) return null;
+  const participantsQuery = useMemoFirebase(() => {
+    if (!firestore || !participantIds || participantIds.length === 0) return null;
     return query(collection(firestore, 'users'), where(documentId(), 'in', participantIds));
   }, [firestore, participantIds]);
 
