@@ -127,18 +127,14 @@
   "firestore": {
     "structure": [
       {
-        "path": "users/{userId}/outreach_events/{outreachId}",
+        "path": "outreaches/{outreachId}",
         "definition": {
           "entityName": "Outreach",
           "schema": {
             "$ref": "#/backend/entities/Outreach"
           },
-          "description": "Represents outreach events created by a specific coordinator. Includes denormalized 'participantIds' array for authorization independence.",
+          "description": "Represents outreach events. Includes denormalized 'participantIds' and 'coordinatorId' for authorization.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the coordinator (user) who created the outreach event."
-            },
             {
               "name": "outreachId",
               "description": "The unique ID of the outreach event."
@@ -147,13 +143,13 @@
         }
       },
       {
-        "path": "outreach_events/{outreachId}/new_converts/{newConvertId}",
+        "path": "outreaches/{outreachId}/new_converts/{newConvertId}",
         "definition": {
           "entityName": "NewConvert",
           "schema": {
             "$ref": "#/backend/entities/NewConvert"
           },
-          "description": "Represents new converts associated with a specific outreach event. Includes denormalized 'outreachId' for authorization independence. Includes also `assignedTo` to store the `userId` of the reacher assigned to follow up with the new convert.",
+          "description": "Represents new converts associated with a specific outreach event. Includes denormalized 'outreachId' and `assignedTo` for authorization.",
           "params": [
             {
               "name": "outreachId",
@@ -167,6 +163,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support the Outreach feature, focusing on authorization independence, clarity, and scalability. It leverages path-based ownership for user-related data and denormalization to avoid complex security rules that require `get()` calls. The structure supports secure `list` operations (QAPs) by segregating data based on ownership and role. \n\n`users/{userId}/outreach_events/{outreachId}`:\nThis path establishes clear ownership of outreach events by coordinators. The coordinator, identified by `userId`, has exclusive access to create, update, and delete outreach events under their control. Participants are managed through denormalized `participantIds` array within each `outreach_events` document to maintain authorization independence. Security rules can easily enforce that only the coordinator (`userId`) can modify these documents.\n\n`outreach_events/{outreachId}/new_converts/{newConvertId}`:\nThis structure enables each outreach event to manage its new converts. The `new_converts` subcollection is designed to store contact information and follow-up notes for each new convert. The `outreachId` is denormalized within each `new_converts` document to enforce the relationship and allow simple querying of new converts associated with a specific outreach event. Also, `assignedTo` field within the `new_converts` documents stores the `userId` of the reacher assigned to follow up with the new convert.\n\nTo achieve Authorization Independence:\nThe `coordinatorId` is stored in the `outreach_events` collection and the `outreachId` is stored in the `new_converts` collection. This eliminates the need for `get()` calls to verify the coordinator's ownership of the outreach or the reacher's assignment to the new convert.\n\nTo enable QAPs:\nEach `outreach_events` document contains a `participantIds` array, representing the members of the outreach. Security rules can allow listing only if the authenticated user's `uid` is in the `participantIds` list, securing the list operation without filtering data after retrieval."
+    "reasoning": "The Firestore data structure is designed to support the Outreach feature, focusing on authorization independence, clarity, and scalability. It leverages denormalization to avoid complex security rules that require `get()` calls. \n\n`outreaches/{outreachId}`:\nThis path stores outreach events. The `coordinatorId` and `participantIds` are stored directly in the document to allow for security rules to check for ownership and participation without extra database reads. \n\n`outreaches/{outreachId}/new_converts/{newConvertId}`:\nThis structure enables each outreach event to manage its new converts. The `new_converts` subcollection is designed to store contact information and follow-up notes for each new convert. The `outreachId` is denormalized within each `new_converts` document to enforce the relationship. The `assignedTo` field within the `new_converts` documents stores the `userId` of the reacher assigned to follow up with the new convert."
   }
 }
