@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {generate} from 'genkit';
 
 const GeneratePersonalizedEncouragementInputSchema = z.object({
   userProfile: z
@@ -56,7 +57,33 @@ const generatePersonalizedEncouragementFlow = ai.defineFlow(
     outputSchema: GeneratePersonalizedEncouragementOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      return output!;
+    } catch (e: any) {
+      if (e.message.includes('503')) {
+        // Fallback to a different model if the primary one is overloaded
+        const llmResponse = await generate({
+            model: 'googleai/gemini-1.5-flash-latest',
+            prompt: `You are a spiritual guide providing personalized encouragements by selecting relevant scriptures.
+
+            Based on the user profile and conversation history, provide a personalized encouragement message and a relevant scripture reference.
+
+            User Profile: ${input.userProfile}
+            Conversation History: ${input.conversationHistory}
+
+            Ensure the encouragement is timely, relevant, and supportive.
+            Return a JSON object with 'encouragement' and 'scriptureReference' keys.
+            `,
+            output: {
+                format: 'json',
+                schema: GeneratePersonalizedEncouragementOutputSchema,
+            }
+        });
+        return llmResponse.output()!;
+      }
+      // Re-throw other errors
+      throw e;
+    }
   }
 );
