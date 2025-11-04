@@ -33,10 +33,27 @@ function BreadcrumbGenerator({ pathname }: { pathname: string }) {
                       <Link href="/dashboard">Dashboard</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
-                {segments.length > 1 && segments.slice(1).map((segment, index) => {
-                    const href = `/${segments.slice(0, index + 2).join('/')}`;
-                    const isLast = index === segments.length - 2;
-                    const name = pathToTitle[href] || segment.charAt(0).toUpperCase() + segment.slice(1);
+                {segments.length > 1 && segments.map((segment, index) => {
+                    const isLast = index === segments.length - 1;
+                    const isDynamic = segment.startsWith('[') && segment.endsWith(']');
+                    // If it is the first segment, it is 'dashboard'. We don't want to show it again.
+                    if (index === 0) return null;
+
+                    const href = `/${segments.slice(0, index + 1).join('/')}`;
+                    const parentHref = `/${segments.slice(0, index).join('/')}`;
+                    
+                    const name = pathToTitle[href] || (isDynamic ? 'Details' : segment.charAt(0).toUpperCase() + segment.slice(1));
+                    
+                    if (isDynamic) {
+                        return (
+                             <React.Fragment key={href}>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>{name}</BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </React.Fragment>
+                        )
+                    }
 
                     return (
                         <React.Fragment key={href}>

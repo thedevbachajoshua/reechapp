@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, MapPin, Users, HeartHandshake } from 'lucide-react';
 import { Button } from '../ui/button';
+import Link from 'next/link';
 
 type OutreachEvent = {
   id: number;
@@ -59,7 +60,9 @@ export function OutreachCard({ event }: { event: OutreachEvent }) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full">View Details</Button>
+        <Button asChild className="w-full">
+            <Link href={`/dashboard/outreaches/${event.id}`}>View Details</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
