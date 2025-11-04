@@ -3,7 +3,14 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { activityData } from '@/lib/data';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+
+const chartConfig = {
+  FollowUps: {
+    label: 'Follow-ups',
+    color: 'hsl(var(--primary))',
+  },
+} satisfies ChartConfig;
 
 export function ActivityChart() {
     return (
@@ -13,8 +20,8 @@ export function ActivityChart() {
           <CardDescription>Monthly follow-ups sent by the team.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={activityData}>
+          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+            <BarChart accessibilityLayer data={activityData}>
               <XAxis
                 dataKey="date"
                 stroke="#888888"
@@ -33,9 +40,9 @@ export function ActivityChart() {
                 cursor={{ fill: 'hsl(var(--accent) / 0.2)' }}
                 content={<ChartTooltipContent />}
                 />
-              <Bar dataKey="FollowUps" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="FollowUps" fill="var(--color-FollowUps)" radius={[4, 4, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </CardContent>
       </Card>
     );
