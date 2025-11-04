@@ -64,7 +64,7 @@ export default function RoleSelectionPage() {
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle>Choose Your Role</CardTitle>
-          <CardDescription>Select how you will be using the REACH: Nurture platform.</CardDescription>
+          <CardDescription>Select how you will be using the REECH platform.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <button

@@ -31,7 +31,7 @@ export default function LoginPage() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <HeartHandshake className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground font-headline">REACH: Nurture</h1>
+          <h1 className="text-3xl font-bold text-foreground font-headline">REECH</h1>
           <p className="text-muted-foreground">Sign in as a Supervisor or Reacher to continue.</p>
         </div>
         <LoginForm />

@@ -6,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { UserProvider } from '@/context/user-context';
 
 export const metadata: Metadata = {
-  title: 'REACH: Nurture',
+  title: 'REECH',
   description: 'A platform to nurture new believers.',
 };
 

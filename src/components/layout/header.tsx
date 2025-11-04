@@ -87,7 +87,7 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
                 <SidebarTrigger className="md:hidden" />
                  <div className="md:hidden flex items-center gap-2 font-bold font-headline">
                     <HeartHandshake className="h-6 w-6 text-primary" />
-                    REACH: Nurture
+                    REECH
                 </div>
                 <BreadcrumbGenerator pathname={pathname} pageTitle={pageTitle} />
             </div>
