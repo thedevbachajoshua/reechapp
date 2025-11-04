@@ -19,7 +19,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, AuthError } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -43,12 +43,13 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      // First, try to sign in the user
+      // First, try to sign in the user.
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged in UserProvider will handle the redirect
-    } catch (error: any) {
-      // If sign-in fails because of invalid credentials, try to create a new user
-      if (error.code === AuthErrorCodes.INVALID_LOGIN_CREDENTIALS) {
+      // onAuthStateChanged in UserProvider will handle redirect on success.
+    } catch (error) {
+      const authError = error as AuthError;
+      // If sign-in fails because the user doesn't exist, create a new account.
+      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
         try {
           await createUserWithEmailAndPassword(auth, values.email, values.password);
           // New user created. onAuthStateChanged will redirect them to role selection.
@@ -56,28 +57,29 @@ export function LoginForm() {
             title: 'Welcome!',
             description: 'Your account has been created. Please choose your role.',
           });
-        } catch (signUpError: any) {
-          // Handle sign-up errors (e.g., email already in use with a different credential type)
+        } catch (signUpError) {
+          const signUpAuthError = signUpError as AuthError;
+          // Handle specific sign-up errors.
           let errorMessage = 'An unexpected error occurred during sign-up.';
-           if (signUpError.code === AuthErrorCodes.EMAIL_EXISTS) {
-            errorMessage = 'This email is already in use. Please try signing in.';
+           if (signUpAuthError.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email is already in use with a different password.';
           }
           toast({
             variant: 'destructive',
             title: 'Sign-Up Failed',
             description: errorMessage,
           });
-          setIsLoading(false);
         }
       } else {
-        // Handle other sign-in errors
+        // Handle other sign-in errors (like wrong password).
         toast({
           variant: 'destructive',
           title: 'Authentication Failed',
-          description: 'An unexpected error occurred. Please try again.',
+          description: 'Invalid email or password. Please try again.',
         });
-        setIsLoading(false);
       }
+    } finally {
+      setIsLoading(false);
     }
   }
 
