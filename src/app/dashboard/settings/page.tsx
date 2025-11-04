@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Loader2, Shield, User, HelpCircle, FileText, Info, Camera } from 'lucide-react';
+import { Loader2, Shield, User, HelpCircle, FileText, Info, Camera, Code } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -345,6 +345,29 @@ export default function SettingsPage() {
                     <p>Churches, campus ministries, and outreach teams who want to stay organized and intentional about soul-winning.</p>
                     <h4 className="font-bold mt-4">Our Vision</h4>
                     <p>To see every soul reached, nurtured, and established in the faith — one connection at a time.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="about-development">
+                  <AccordionTrigger>
+                     <div className="flex items-center gap-2">
+                        <Code /> About Development
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
+                    <h4 className="font-bold mt-2">Developer</h4>
+                    <p>REACH was designed and developed by Joshua Mba Bacha — a passionate young innovator and student who believes in using technology to advance God’s Kingdom across Africa and beyond.</p>
+                    <h4 className="font-bold mt-4">Vision Behind REACH</h4>
+                    <p>Joshua built REACH out of a deep desire to solve a real challenge in evangelism: the lack of consistent follow-up and discipleship after outreach. REACH combines faith and technology to help believers stay connected, nurture new converts, and strengthen their spiritual journey.</p>
+                    <h4 className="font-bold mt-4">Development Philosophy</h4>
+                     <p>Every feature in REACH is inspired by real evangelism experiences — simple, purposeful, and Spirit-led. The goal is to make soul-winning organized, collaborative, and effective through seamless tools and automation.</p>
+                    <h4 className="font-bold mt-4">Contact</h4>
+                     <p>
+                        📧 mbabachajoshua@gmail.com<br/>
+                        🌍 LinkedIn: Joshua Mba Bacha<br/>
+                        💬 For collaboration or feedback, reach out anytime — let’s build tools that reach souls.
+                     </p>
+                    <h4 className="font-bold mt-4">Version Info</h4>
+                    <p>Current Version: 1.0.0 (Beta)<br/>Developed and maintained by Joshua Mba Bacha</p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
