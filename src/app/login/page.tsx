@@ -32,7 +32,7 @@ export default function LoginPage() {
             <HeartHandshake className="h-8 w-8" />
           </div>
           <h1 className="text-3xl font-bold text-foreground font-headline">REACH: Nurture</h1>
-          <p className="text-muted-foreground">Sign in to nurture and grow your community</p>
+          <p className="text-muted-foreground">Sign in as a Supervisor or Reacher to continue.</p>
         </div>
         <LoginForm />
         <p className="mt-4 text-center text-sm text-muted-foreground">
