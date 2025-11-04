@@ -21,49 +21,56 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const userDocRef = useMemoFirebase(() => (user && firestore ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
-  const [isRedirecting, setIsRedirecting] = useState(true);
+  const [globalLoading, setGlobalLoading] = useState(true);
 
   useEffect(() => {
-    // Don't do anything until both auth and profile loading are complete
-    if (isAuthLoading || (user && isProfileLoading)) {
+    // Determine if we are on a page that doesn't require authentication
+    const isPublicPage = ['/login', '/role-selection'].includes(pathname);
+
+    // If auth state is still loading, we wait.
+    if (isAuthLoading) {
+      setGlobalLoading(true);
       return;
     }
 
-    const isAuthPage = pathname === '/login' || pathname === '/role-selection';
-
-    // If user is not logged in and not on an auth page, redirect to login.
-    if (!user && !isAuthPage) {
+    // If no user is logged in, and we are not on a public page, redirect to login.
+    if (!user && !isPublicPage) {
       router.push('/login');
+      // We don't set loading to false yet, the redirect will cause a re-render.
+      return;
+    }
+    
+    // If a user is logged in, but we are still loading their profile, wait.
+    if (user && isProfileLoading) {
+      setGlobalLoading(true);
       return;
     }
 
-    // If user is logged in but has no profile/role, redirect to role selection,
-    // but only if we are not already on an auth page.
-    if (user && !userProfile && !isAuthPage) {
-        router.push('/role-selection');
-        return;
+    // If a user is logged in but has no profile, redirect to role selection,
+    // unless they are already on a public page.
+    if (user && !userProfile && !isPublicPage) {
+      router.push('/role-selection');
+      return;
     }
 
-    // If user is logged in and on an auth page, send to dashboard.
-    if (user && userProfile && isAuthPage) {
+    // If a user is logged in, has a profile, and is on a public page,
+    // redirect them to the dashboard.
+    if (user && userProfile && isPublicPage) {
       router.push('/dashboard');
       return;
     }
 
-    // If we've reached this point, no redirect is needed.
-    setIsRedirecting(false);
+    // If none of the above conditions are met, we are done loading and can show the content.
+    setGlobalLoading(false);
 
-  }, [user, isAuthLoading, userProfile, isProfileLoading, router, pathname]);
+  }, [user, userProfile, isAuthLoading, isProfileLoading, pathname, router]);
 
-  const loading = isAuthLoading || isProfileLoading || isRedirecting;
-  const isAuthPage = pathname === '/login' || pathname === '/role-selection';
-
-  // Show a global loader if we're loading and not on an auth page
-  if (loading && !isAuthPage) {
+  // If we are in a loading state, show the global loader.
+  if (globalLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -71,20 +78,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     );
   }
 
-  // If we are on an auth page, render the children immediately
-  // The useEffect will handle redirecting away if the user is already logged in.
-  if (isAuthPage) {
-    return (
-        <UserContext.Provider value={{ user, userProfile, loading }}>
-            {children}
-        </UserContext.Provider>
-    );
-  }
-
-
+  // Once loading is complete, provide the context and render the children.
   return (
-    <UserContext.Provider value={{ user, userProfile, loading }}>
-      {!loading ? children : null}
+    <UserContext.Provider value={{ user, userProfile, loading: globalLoading }}>
+      {children}
     </UserContext.Provider>
   );
 };

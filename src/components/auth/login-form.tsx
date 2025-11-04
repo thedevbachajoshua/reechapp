@@ -27,10 +27,10 @@ const formSchema = z.object({
 });
 
 export function LoginForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
   const { toast } = useToast();
+  // We don't need the router here, the UserProvider will handle redirection.
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -48,35 +48,42 @@ export function LoginForm() {
       // onAuthStateChanged in UserProvider will handle redirect on success.
     } catch (error) {
       const authError = error as AuthError;
-      // If sign-in fails because the user doesn't exist, create a new account.
-      // Firebase returns 'auth/invalid-credential' for both wrong password and user not found.
-      if (authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') {
+      // If sign-in fails because of an invalid credential, it could be a wrong password
+      // OR a user that doesn't exist. We'll try to create an account.
+      if (authError.code === 'auth/invalid-credential') {
         try {
           await createUserWithEmailAndPassword(auth, values.email, values.password);
-          // New user created. onAuthStateChanged will redirect them to role selection.
+          // New user created. onAuthStateChanged will see the new user, and the
+          // UserProvider will redirect them to role selection.
           toast({
             title: 'Welcome!',
             description: 'Your account has been created. Please choose your role.',
           });
         } catch (signUpError) {
           const signUpAuthError = signUpError as AuthError;
-          // Handle specific sign-up errors.
-          let errorMessage = 'An unexpected error occurred during sign-up.';
-           if (signUpAuthError.code === 'auth/email-already-in-use') {
-            errorMessage = 'This email is already in use with a different password.';
+          // If creating the user fails because the email is in use, it means the
+          // original password was simply wrong.
+          if (signUpAuthError.code === 'auth/email-already-in-use') {
+            toast({
+              variant: 'destructive',
+              title: 'Authentication Failed',
+              description: 'Invalid password. Please try again.',
+            });
+          } else {
+             // Handle other, more unexpected sign-up errors.
+             toast({
+                variant: 'destructive',
+                title: 'Sign-Up Failed',
+                description: signUpAuthError.message || 'An unexpected error occurred.',
+            });
           }
-          toast({
-            variant: 'destructive',
-            title: 'Sign-Up Failed',
-            description: errorMessage,
-          });
         }
       } else {
-        // Handle other sign-in errors (like wrong password).
+        // Handle other sign-in errors that aren't 'invalid-credential'.
         toast({
           variant: 'destructive',
           title: 'Authentication Failed',
-          description: 'Invalid email or password. Please try again.',
+          description: authError.message || 'An unexpected error occurred.',
         });
       }
     } finally {
