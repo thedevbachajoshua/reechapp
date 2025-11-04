@@ -38,33 +38,39 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [userDocRef, setUserProfile]);
 
   useEffect(() => {
-    const isPublicPage = ['/login', '/role-selection'].includes(pathname);
+    const isAuthPage = ['/login', '/role-selection'].includes(pathname);
 
+    // Stay on the current page if we're still determining auth state
     if (isAuthLoading) {
       setGlobalLoading(true);
       return;
     }
 
-    if (!user && !isPublicPage) {
+    // If no user and not on a public auth page, redirect to login
+    if (!user && !isAuthPage) {
       router.push('/login');
       return;
     }
     
+    // If there is a user but we are still waiting for their profile
     if (user && isProfileLoading) {
-      setGlobalLoading(true);
-      return;
+        setGlobalLoading(true);
+        return;
     }
 
-    if (user && !userProfile && !isPublicPage) {
+    // If user exists but has no role, and is not on role selection, redirect there
+    if (user && !userProfile && pathname !== '/role-selection') {
       router.push('/role-selection');
       return;
     }
 
-    if (user && userProfile && isPublicPage) {
+    // If user has a profile and is on an auth page, redirect to dashboard
+    if (user && userProfile && isAuthPage) {
       router.push('/dashboard');
       return;
     }
 
+    // If none of the above, loading is complete
     setGlobalLoading(false);
 
   }, [user, userProfile, isAuthLoading, isProfileLoading, pathname, router]);

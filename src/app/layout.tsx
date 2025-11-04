@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { UserProvider } from '@/context/user-context';
 
 export const metadata: Metadata = {
   title: 'REACH: Nurture',
@@ -30,7 +31,9 @@ export default function RootLayout({
         )}
       >
         <FirebaseClientProvider>
-          {children}
+          <UserProvider>
+            {children}
+          </UserProvider>
         </FirebaseClientProvider>
         <Toaster />
       </body>
