@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,20 +13,52 @@ import {
 } from '@/components/ui/dialog';
 import { ContactsTable } from '@/components/contacts/contacts-table';
 import { AddContactForm, NewContact } from '@/components/contacts/add-contact-form';
-import { contacts as initialContacts, Contact } from '@/lib/data';
+import { useUserContext } from '@/context/user-context';
+import { useFirestore, useCollection, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { collection, query, where, addDoc } from 'firebase/firestore';
+
+export type Contact = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  status: string;
+  dateAdded: string;
+  ownerId: string;
+};
 
 export default function ContactsPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [contacts, setContacts] = React.useState<Contact[]>(initialContacts);
+  const { user } = useUserContext();
+  const firestore = useFirestore();
 
-  const handleAddContact = (newContact: NewContact) => {
-    const contactToAdd: Contact = {
+  const contactsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'contacts'), where('ownerId', '==', user.uid));
+  }, [firestore, user]);
+
+  const { data: contacts, isLoading, setData: setContacts } = useCollection<Contact>(contactsQuery);
+
+  const handleAddContact = async (newContact: NewContact) => {
+    if (!firestore || !user) return;
+    
+    const contactToAdd = {
       ...newContact,
-      id: Math.max(...contacts.map(c => c.id), 0) + 1, // simple id generation
       status: 'New',
-      dateAdded: new Date().toISOString().split('T')[0], // a YYYY-MM-DD string
+      dateAdded: new Date().toISOString(),
+      ownerId: user.uid,
     };
-    setContacts(prevContacts => [contactToAdd, ...prevContacts]);
+    
+    const contactsCollection = collection(firestore, 'contacts');
+    addDoc(contactsCollection, contactToAdd)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: contactsCollection.path,
+                operation: 'create',
+                requestResourceData: contactToAdd,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
 
@@ -55,7 +87,13 @@ export default function ContactsPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <ContactsTable contacts={contacts} setContacts={setContacts} />
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <ContactsTable contacts={contacts || []} setContacts={setContacts} />
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@
  *   - `participantIds` is an array of user IDs of assigned Reachers.
  * - /outreaches/{outreachId}/new_converts/{newConvertId}: New converts for an event.
  *   - `assignedTo` is the `userId` of the reacher assigned to follow up.
+ * - /contacts/{contactId}: General contacts added by a user.
  * - /scheduled_follow_ups/{followUpId}: Messages to be sent later.
  *
  * Key Security Decisions:
@@ -53,6 +54,12 @@ service cloud.firestore {
       // This is safe because they can't change their own role once it's set on the client-side logic.
       // A more robust implementation would prevent role changes here.
       allow write: if isOwner(userId);
+    }
+    
+    match /contacts/{contactId} {
+      // A user can only access contacts they own.
+      allow read, write: if isSignedIn() && isOwner(resource.data.ownerId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.ownerId);
     }
 
     match /outreaches/{outreachId} {

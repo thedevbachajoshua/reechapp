@@ -131,6 +131,45 @@
         "assignedTo"
       ]
     },
+    "Contact": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contact",
+      "type": "object",
+      "description": "Represents a contact or new believer added by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Contact."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the contact."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of the contact."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the contact."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the contact (e.g., New, Contacted)."
+        },
+        "dateAdded": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the contact was added."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this contact."
+        }
+      },
+      "required": [ "name", "email", "status", "dateAdded", "ownerId" ]
+    },
     "ScheduledFollowUp": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Scheduled Follow-Up",
@@ -199,6 +238,16 @@
               "description": "The unique ID of the new convert."
             }
           ]
+        }
+      },
+       {
+        "path": "contacts/{contactId}",
+        "definition": {
+          "entityName": "Contact",
+          "schema": {
+            "$ref": "#/backend/entities/Contact"
+          },
+          "description": "Stores contacts added by users."
         }
       },
       {
