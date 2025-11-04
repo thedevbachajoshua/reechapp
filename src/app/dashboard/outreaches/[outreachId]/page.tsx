@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Header from '@/components/layout/header';
 
 export default function OutreachDetailPage() {
   const params = useParams();
@@ -36,6 +37,9 @@ export default function OutreachDetailPage() {
 
 
   return (
+    <>
+    <Header pageTitle={event.title} />
+    <main className="flex-1 p-4 md:p-6 lg:p-8">
     <div className="space-y-6">
        <div>
           <h1 className="text-3xl font-bold font-headline">{event.title}</h1>
@@ -134,5 +138,7 @@ export default function OutreachDetailPage() {
       </Card>
 
     </div>
+    </main>
+    </>
   );
 }

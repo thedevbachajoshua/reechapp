@@ -22,13 +22,13 @@ const pathToTitle: { [key: string]: string } = {
     '/dashboard/ai-encouragement': 'AI Encouragement',
 };
 
-function BreadcrumbGenerator({ pathname }: { pathname: string }) {
+function BreadcrumbGenerator({ pathname, pageTitle }: { pathname: string, pageTitle?: string }) {
     const segments = pathname.split('/').filter(Boolean);
 
     return (
         <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
-                {segments.length <= 2 ? (
+                {segments.length < 2 || (segments.length === 2 && segments[0] === 'dashboard') ? (
                      <BreadcrumbItem>
                         <BreadcrumbPage>{pathToTitle[pathname] || 'Page'}</BreadcrumbPage>
                     </BreadcrumbItem>
@@ -44,16 +44,12 @@ function BreadcrumbGenerator({ pathname }: { pathname: string }) {
 
                             const isLast = index === segments.length - 1;
                             const href = `/${segments.slice(0, index + 1).join('/')}`;
-                            
-                            // For a path like /dashboard/outreaches/[outreachId], the parent is /dashboard/outreaches
                             const parentHref = `/${segments.slice(0, index).join('/')}`;
-                            const isDynamic = segment.startsWith('[') && segment.endsWith(']');
                             
-                            const name = isDynamic 
-                                ? 'Details' // Or fetch the actual name if available
-                                : pathToTitle[href] || segment.charAt(0).toUpperCase() + segment.slice(1);
+                            const name = isLast && pageTitle 
+                              ? pageTitle
+                              : pathToTitle[href] || segment.charAt(0).toUpperCase() + segment.slice(1);
                             
-                            const parentName = pathToTitle[parentHref];
                             
                             // This part handles the breadcrumb for the dynamic part of the URL
                             if (index === 1) { // e.g. 'outreaches'
@@ -73,7 +69,7 @@ function BreadcrumbGenerator({ pathname }: { pathname: string }) {
                                 );
                             }
 
-                            if (isDynamic) {
+                             if (index === 2) {
                                 return (
                                     <React.Fragment key={href}>
                                         <BreadcrumbSeparator />
@@ -93,8 +89,16 @@ function BreadcrumbGenerator({ pathname }: { pathname: string }) {
     )
 }
 
-export default function Header() {
+export default function Header({ pageTitle }: { pageTitle?: string}) {
     const pathname = usePathname();
+
+    // Do not render the header on layout, only on pages that pass pageTitle
+    if (pageTitle === undefined && pathname.includes('dashboard/outreaches/')) {
+        return null;
+    }
+    
+    const isLayoutHeader = !pageTitle && !pathname.includes('dashboard/outreaches/');
+
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
@@ -104,7 +108,7 @@ export default function Header() {
                     <HeartHandshake className="h-6 w-6 text-primary" />
                     REACH: Nurture
                 </div>
-                <BreadcrumbGenerator pathname={pathname} />
+                <BreadcrumbGenerator pathname={pathname} pageTitle={pageTitle} />
             </div>
             {/* Future header items like search or user menu can go here */}
         </header>
