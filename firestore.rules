@@ -95,10 +95,11 @@ service cloud.firestore {
         // The `creatorId` field ensures we know who made it.
         allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
 
-        // In a real app, only a backend service role should be able to update/delete these.
-        // For now, we allow the creator to delete their own scheduled message.
+        // The creator can delete their own scheduled message.
         allow delete: if isOwner(resource.data.creatorId);
-        allow update: if false; // Prevent client-side updates to sent status etc.
+        
+        // The creator can update the status of their own scheduled message (for "Send Now").
+        allow update: if isOwner(resource.data.creatorId);
     }
   }
 }
