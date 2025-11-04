@@ -8,8 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -36,7 +35,7 @@ export default function SettingsPage() {
     
     try {
       const userDocRef = doc(firestore, 'users', user.uid);
-      updateDocumentNonBlocking(userDocRef, updatedProfile);
+      await setDoc(userDocRef, updatedProfile, { merge: true });
 
       toast({
         title: 'Profile Updated',

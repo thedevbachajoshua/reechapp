@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, User, Loader2 } from 'lucide-react';
@@ -36,7 +35,7 @@ export default function RoleSelectionPage() {
     
     try {
       const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
-      setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
+      await setDoc(userDocRef, userProfile, { merge: true });
       
       toast({
         title: 'Role Selected',
