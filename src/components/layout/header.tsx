@@ -25,69 +25,50 @@ const pathToTitle: { [key: string]: string } = {
 function BreadcrumbGenerator({ pathname, pageTitle }: { pathname: string, pageTitle?: string }) {
     const segments = pathname.split('/').filter(Boolean);
 
+    if (segments.length < 2) {
+        return (
+            <Breadcrumb className="hidden md:flex">
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbPage>{pathToTitle[pathname] || 'Dashboard'}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
+        );
+    }
+    
     return (
         <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
-                {segments.length < 2 || (segments.length === 2 && segments[0] === 'dashboard') ? (
-                     <BreadcrumbItem>
-                        <BreadcrumbPage>{pathToTitle[pathname] || 'Page'}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                ) : (
-                    <>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                              <Link href="/dashboard">Dashboard</Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        {segments.map((segment, index) => {
-                            if (index === 0) return null; // skip 'dashboard'
+                {segments.map((segment, index) => {
+                    if (index === 0 && segment === 'dashboard') return null;
 
-                            const isLast = index === segments.length - 1;
-                            const href = `/${segments.slice(0, index + 1).join('/')}`;
-                            const parentHref = `/${segments.slice(0, index).join('/')}`;
-                            
-                            const name = isLast && pageTitle 
-                              ? pageTitle
-                              : pathToTitle[href] || segment.charAt(0).toUpperCase() + segment.slice(1);
-                            
-                            
-                            // This part handles the breadcrumb for the dynamic part of the URL
-                            if (index === 1) { // e.g. 'outreaches'
-                                 return (
-                                    <React.Fragment key={href}>
-                                        <BreadcrumbSeparator />
-                                        <BreadcrumbItem>
-                                            {isLast ? (
-                                                <BreadcrumbPage>{name}</BreadcrumbPage>
-                                            ) : (
-                                                <BreadcrumbLink asChild>
-                                                    <Link href={href}>{name}</Link>
-                                                </BreadcrumbLink>
-                                            )}
-                                        </BreadcrumbItem>
-                                    </React.Fragment>
-                                );
-                            }
+                    const href = `/${segments.slice(0, index + 1).join('/')}`;
+                    const name = pageTitle && index === segments.length - 1
+                        ? pageTitle
+                        : pathToTitle[href] || segment.charAt(0).toUpperCase() + segment.slice(1);
+                    const isLast = index === segments.length - 1;
 
-                             if (index === 2) {
-                                return (
-                                    <React.Fragment key={href}>
-                                        <BreadcrumbSeparator />
-                                        <BreadcrumbItem>
-                                            <BreadcrumbPage>{name}</BreadcrumbPage>
-                                        </BreadcrumbItem>
-                                    </React.Fragment>
-                                )
-                            }
-
-                            return null;
-                        })}
-                    </>
-                )}
+                    return (
+                        <React.Fragment key={href}>
+                             {index > (segments[0] === 'dashboard' ? 1 : 0) && <BreadcrumbSeparator />}
+                            <BreadcrumbItem>
+                                {isLast ? (
+                                    <BreadcrumbPage>{name}</BreadcrumbPage>
+                                ) : (
+                                    <BreadcrumbLink asChild>
+                                        <Link href={href}>{name}</Link>
+                                    </BreadcrumbLink>
+                                )}
+                            </BreadcrumbItem>
+                        </React.Fragment>
+                    );
+                })}
             </BreadcrumbList>
         </Breadcrumb>
     )
 }
+
 
 export default function Header({ pageTitle }: { pageTitle?: string}) {
     const pathname = usePathname();
