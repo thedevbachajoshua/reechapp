@@ -10,14 +10,36 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield, User, HelpCircle, FileText, Info } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import type { UserProfile } from '@/lib/data';
+
+const profileFormSchema = {
+  name: (value: string) => value.length > 0 ? null : "Name is required",
+  photoURL: (value: string) => (value.startsWith('http://') || value.startsWith('https://') || value === '') ? null : "Must be a valid URL",
+  phone: (value: string) => value.length > 0 ? null : "Phone is required",
+  organization: (value: string) => null, // Optional
+};
+
 
 export default function SettingsPage() {
   const { user, userProfile, loading, forceRefresh } = useUserContext();
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
-
+  
   const handleSaveChanges = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || !userProfile || !firestore) return;
@@ -26,17 +48,20 @@ export default function SettingsPage() {
     const formData = new FormData(event.currentTarget);
     const name = formData.get('name') as string;
     const photoURL = formData.get('photoURL') as string;
+    const phone = formData.get('phone') as string;
+    const organization = formData.get('organization') as string;
 
     const updatedProfile = {
       name,
       photoURL,
+      phone,
+      organization,
     };
     
     try {
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, updatedProfile, { merge: true });
 
-      // Force a refresh of the user context to show the new data
       await forceRefresh();
 
       toast({
@@ -55,52 +80,146 @@ export default function SettingsPage() {
     }
   };
 
+  const handleRoleChange = async (newRole: UserProfile['role']) => {
+    if (!user || !userProfile || !firestore || userProfile.role === newRole) return;
+    
+    try {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await setDoc(userDocRef, { role: newRole }, { merge: true });
+        await forceRefresh();
+        toast({
+            title: "Role Updated",
+            description: `Your role has been changed to ${newRole}.`
+        });
+    } catch (error) {
+         console.error('Error updating role:', error);
+         toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update your role. Please try again.',
+         });
+    }
+  };
 
-  if (loading) {
-    return <div>Loading profile...</div>;
+
+  if (loading || !userProfile || !user) {
+    return (
+        <div className="space-y-6">
+            <h1 className="text-3xl font-bold font-headline">Settings</h1>
+            <div className="w-full h-64 rounded-lg bg-muted animate-pulse" />
+        </div>
+    );
   }
 
-  if (!user || !userProfile) {
-    return <div>Could not load user profile.</div>;
-  }
+  const otherRole: UserProfile['role'] = userProfile.role === 'Supervisor' ? 'Reacher' : 'Supervisor';
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold font-headline">Profile Settings</h1>
-      <Card>
-        <form onSubmit={handleSaveChanges}>
-          <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
-            <CardDescription>
-              Update your personal information. Your role is: <span className="font-bold text-primary">{userProfile.role}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
-                <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="photoURL">Profile Picture URL</Label>
-                <Input id="photoURL" name="photoURL" type="url" defaultValue={userProfile.photoURL || ''} />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" defaultValue={userProfile.name || ''} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue={user.email || ''} disabled />
-            </div>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
-          </CardContent>
-        </form>
-      </Card>
+      <h1 className="text-3xl font-bold font-headline">Settings</h1>
+      
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="more">More</TabsTrigger>
+        </TabsList>
+        <TabsContent value="account">
+            <Card>
+                <form onSubmit={handleSaveChanges}>
+                <CardHeader>
+                    <CardTitle>Your Profile</CardTitle>
+                    <CardDescription>
+                    Update your personal information.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center gap-6">
+                    <Avatar className="h-24 w-24">
+                        <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
+                        <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid w-full max-w-sm items-center gap-1.5">
+                        <Label htmlFor="photoURL">Profile Picture URL</Label>
+                        <Input id="photoURL" name="photoURL" type="url" defaultValue={userProfile.photoURL || ''} />
+                    </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input id="name" name="name" defaultValue={userProfile.name || ''} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" defaultValue={user.email || ''} disabled />
+                        </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input id="phone" name="phone" defaultValue={(userProfile as any).phone || ''} />
+                        </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="organization">Church/Organization (Optional)</Label>
+                            <Input id="organization" name="organization" defaultValue={(userProfile as any).organization || ''} />
+                        </div>
+                    </div>
+                    <Button type="submit" disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                    </Button>
+                </CardContent>
+                </form>
+            </Card>
+
+            <Card className="mt-6">
+                <CardHeader>
+                    <CardTitle>Your Role</CardTitle>
+                    <CardDescription>Your current role determines your permissions within the app.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-lg border p-4">
+                    <div className="flex items-center gap-3">
+                        {userProfile.role === 'Supervisor' 
+                            ? <Shield className="h-8 w-8 text-primary" /> 
+                            : <User className="h-8 w-8 text-primary" />}
+                        <div>
+                             <p className="font-semibold">You are a</p>
+                             <Badge className="text-base mt-1">{userProfile.role}</Badge>
+                        </div>
+                    </div>
+
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="outline">Switch to {otherRole}</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to switch your role?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Changing your role to <span className="font-bold">{otherRole}</span> will alter your permissions and what you can see and do in the app. This action can be undone at any time from the settings page.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleRoleChange(otherRole)}>
+                                Yes, Switch to {otherRole}
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="more">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Resources & Support</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                     <Button variant="ghost" className="w-full justify-start"><HelpCircle className="mr-2"/>Help Center</Button>
+                     <Button variant="ghost" className="w-full justify-start"><FileText className="mr-2"/>Terms of Service</Button>
+                     <Button variant="ghost" className="w-full justify-start"><FileText className="mr-2"/>Privacy Policy</Button>
+                     <Button variant="ghost" className="w-full justify-start"><Info className="mr-2"/>About REACH</Button>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
