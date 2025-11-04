@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "devotional-1",
+      "description": "A quiet path in a sunlit forest.",
+      "imageUrl": "https://images.unsplash.com/photo-1762013728442-c6cdde57371e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmYWl0aCUyMGpvdXJuZXl8ZW58MHx8fHwxNzYyMjcwODgxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "faith journey"
+    },
+    {
+      "id": "devotional-2",
+      "description": "An open book with a warm light shining on it.",
+      "imageUrl": "https://images.unsplash.com/photo-1576506542790-51244b486a6b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxiaWJsZSUyMHN0dWR5fGVufDB8fHx8MTc2MjI1OTMwOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bible study"
+    },
+    {
+      "id": "devotional-3",
+      "description": "Hands holding a small seedling.",
+      "imageUrl": "https://images.unsplash.com/photo-1458014854819-1a40aa70211c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGlyaXR1YWwlMjBncm93dGh8ZW58MHx8fHwxNzYyMjcwODgwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "spiritual growth"
+    },
+    {
+      "id": "devotional-4",
+      "description": "A group of diverse people sitting together.",
+      "imageUrl": "https://images.unsplash.com/photo-1572981872666-80a4bd158524?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjb21tdW5pdHklMjBmZWxsb3dzaGlwfGVufDB8fHx8MTc2MjI3MDg4MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "community fellowship"
+    },
+    {
+      "id": "avatar-1",
+      "description": "Avatar for Jane Doe",
+      "imageUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx3b21hbiUyMGZhY2V8ZW58MHx8fHwxNzYyMjA5OTk1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman face"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Avatar for Alex Smith",
+      "imageUrl": "https://images.unsplash.com/photo-1599834562135-b6fc90e642ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtYW4lMjBmYWNlfGVufDB8fHx8MTc2MjI1ODk0OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man face"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Avatar for Emily White",
+      "imageUrl": "https://images.unsplash.com/photo-1562337404-3044c84ac061?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx3b21hbiUyMHNtaWxlfGVufDB8fHx8MTc2MjIxNDQ2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman smile"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Avatar for Michael Brown",
+      "imageUrl": "https://images.unsplash.com/photo-1583195763986-0231686dcd43?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjIyMjQ5MzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "avatar-5",
+      "description": "Avatar for Sarah Green",
+      "imageUrl": "https://images.unsplash.com/photo-1662848586769-314289d4c8b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMGdsYXNzZXN8ZW58MHx8fHwxNzYyMjUwNTAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman glasses"
+    },
+    {
+      "id": "main-coordinator-avatar",
+      "description": "Avatar for the main user, John Doe",
+      "imageUrl": "https://images.unsplash.com/flagged/photo-1570612861542-284f4c12e75f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBmYWNlfGVufDB8fHx8MTc2MjE4ODQxNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person face"
+    }
+  ]
 }
