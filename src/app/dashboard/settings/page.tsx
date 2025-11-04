@@ -106,26 +106,14 @@ export default function SettingsPage() {
   };
 
   const handleProfilePictureUpdate = async (newPhotoUrl: string) => {
-    if (!user || !firestore) return;
-
-    try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, { photoURL: newPhotoUrl }, { merge: true });
-        await forceRefresh();
-        toast({
-            title: 'Profile Picture Updated',
-            description: 'Your new profile picture has been saved.',
-        });
-    } catch (error) {
-        console.error('Error updating profile picture:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not update your profile picture.',
-        });
-    } finally {
-        setIsPictureDialogOpen(false);
-    }
+    // This function is temporarily disabled to prevent Firestore errors.
+    // The correct implementation requires Firebase Storage, which is not yet set up.
+    toast({
+        title: 'Feature Coming Soon',
+        description: 'Profile picture saving will be enabled soon. For now, this is just a preview.',
+    });
+    // The state update in UpdateProfilePicture will still show the preview.
+    setIsPictureDialogOpen(false);
   };
 
 
