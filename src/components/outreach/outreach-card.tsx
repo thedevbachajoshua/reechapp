@@ -31,7 +31,7 @@ export function OutreachCard({ event }: { event: OutreachEvent }) {
   };
 
   return (
-    <Card className="flex flex-col border">
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between">
             <CardTitle className="text-xl">{event.title}</CardTitle>
