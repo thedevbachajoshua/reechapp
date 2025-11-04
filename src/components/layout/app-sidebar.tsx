@@ -101,7 +101,7 @@ export default function AppSidebar() {
         </SidebarMenu>
         <div className="flex items-center gap-3 p-2 mt-2 rounded-md bg-sidebar-accent/50">
           <Avatar>
-            <AvatarImage src={userProfile?.photoURL ?? ''} data-ai-hint="person face" />
+            <AvatarImage src={userProfile?.photoURL || undefined} data-ai-hint="person face" />
             <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">

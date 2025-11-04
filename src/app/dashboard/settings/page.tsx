@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -78,7 +78,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={userProfile.photoURL || ''} alt={userProfile.name} data-ai-hint="person face" />
+                <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
                 <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="grid w-full max-w-sm items-center gap-1.5">
