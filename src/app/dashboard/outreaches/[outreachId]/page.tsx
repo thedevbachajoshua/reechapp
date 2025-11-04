@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function OutreachDetailPage() {
   const params = useParams();
@@ -26,6 +27,13 @@ export default function OutreachDetailPage() {
       </div>
     )
   }
+  
+  const statusVariantMap: { [key: string]: 'default' | 'secondary' | 'outline' } = {
+    'Just Met': 'default',
+    Contacted: 'secondary',
+    'Follow-up Scheduled': 'outline',
+  };
+
 
   return (
     <div className="space-y-6">
@@ -49,7 +57,7 @@ export default function OutreachDetailPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><HeartHandshake className="h-5 w-5" /> New Converts</span>
-              <span className="font-bold">{event.newConverts}</span>
+              <span className="font-bold">{event.newConverts.length}</span>
             </div>
              <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><Clock className="h-5 w-5" /> Status</span>
@@ -88,10 +96,40 @@ export default function OutreachDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            {/* This will be replaced with a table of new converts */}
-            <div className="text-center text-muted-foreground py-8">
-                <p>No new converts have been recorded for this outreach yet.</p>
-            </div>
+            {event.newConverts.length > 0 ? (
+                 <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Phone</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Assigned To</TableHead>
+                                <TableHead>Notes</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {event.newConverts.map((convert, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium">{convert.name}</TableCell>
+                                    <TableCell>{convert.phone}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={statusVariantMap[convert.status]} className={convert.status === 'Just Met' ? 'bg-accent text-accent-foreground' : ''}>
+                                            {convert.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>{convert.assignedTo}</TableCell>
+                                    <TableCell className="text-muted-foreground">{convert.notes}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
+                <div className="text-center text-muted-foreground py-8">
+                    <p>No new converts have been recorded for this outreach yet.</p>
+                </div>
+            )}
         </CardContent>
       </Card>
 

@@ -5,13 +5,21 @@ import { Calendar, MapPin, Users, HeartHandshake } from 'lucide-react';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 
+type NewConvert = {
+    name: string;
+    phone: string;
+    status: string;
+    assignedTo: string;
+    notes: string;
+};
+
 type OutreachEvent = {
   id: number;
   title: string;
   date: string;
   location: string;
   status: 'Planned' | 'Ongoing' | 'Completed';
-  newConverts: number;
+  newConverts: NewConvert[];
   participants: { name: string; avatar: string }[];
 };
 
@@ -41,7 +49,7 @@ export function OutreachCard({ event }: { event: OutreachEvent }) {
                 <p className="text-sm text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4" /> Reachers</p>
             </div>
             <div>
-                <p className="font-bold text-2xl">{event.newConverts}</p>
+                <p className="font-bold text-2xl">{event.newConverts.length}</p>
                 <p className="text-sm text-muted-foreground flex items-center gap-1"><HeartHandshake className="h-4 w-4" /> Converts</p>
             </div>
         </div>
