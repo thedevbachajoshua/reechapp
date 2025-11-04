@@ -48,8 +48,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId) && !exists(/databases/$(database)/documents/users/$(userId));
-      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
+      // Allow user to create their own profile, but not change their role once set.
+      allow write: if isOwner(userId) && (!exists(path) || request.resource.data.role == resource.data.role);
     }
 
     match /outreaches/{outreachId} {
