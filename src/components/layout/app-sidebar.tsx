@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   HeartHandshake,
@@ -36,6 +37,12 @@ const menuItems = [
 export default function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    setOpenMobile(false);
+  };
+
 
   return (
     <Sidebar>
@@ -56,6 +63,7 @@ export default function AppSidebar() {
                 asChild
                 isActive={pathname.startsWith(item.href) && (item.href === '/dashboard' ? pathname === item.href : true)}
                 tooltip={item.label}
+                onClick={handleLinkClick}
               >
                 <Link href={item.href}>
                   <item.icon />
@@ -70,7 +78,7 @@ export default function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
+            <SidebarMenuButton asChild tooltip="Settings" onClick={handleLinkClick}>
               <Link href="#">
                 <Settings />
                 <span>Settings</span>
@@ -94,7 +102,10 @@ export default function AppSidebar() {
             variant="ghost" 
             className="h-7 w-7" 
             tooltip="Log Out"
-            onClick={() => router.push('/login')}>
+            onClick={() => {
+              handleLinkClick();
+              router.push('/login');
+            }}>
               <LogOut className="h-4 w-4" />
           </SidebarMenuButton>
         </div>
