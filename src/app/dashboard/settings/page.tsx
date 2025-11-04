@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import type { UserProfile } from '@/lib/data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { UpdateProfilePicture } from '@/components/settings/update-profile-picture';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const profileFormSchema = {
@@ -244,17 +245,111 @@ export default function SettingsPage() {
             </Card>
         </TabsContent>
         <TabsContent value="more">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Resources & Support</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                     <Button variant="ghost" className="w-full justify-start"><HelpCircle className="mr-2"/>Help Center</Button>
-                     <Button variant="ghost" className="w-full justify-start"><FileText className="mr-2"/>Terms of Service</Button>
-                     <Button variant="ghost" className="w-full justify-start"><FileText className="mr-2"/>Privacy Policy</Button>
-                     <Button variant="ghost" className="w-full justify-start"><Info className="mr-2"/>About REACH</Button>
-                </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Resources &amp; Support</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="help-center">
+                  <AccordionTrigger>
+                    <div className="flex items-center gap-2">
+                        <HelpCircle /> Help Center
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
+                    <h3 className="font-bold mt-2">Welcome to the REACH Help Center!</h3>
+                    <p>Get quick answers and learn how to make the most of REACH.</p>
+                    <h4 className="font-bold mt-4">📖 Getting Started</h4>
+                    <ul>
+                      <li>Sign up as a Supervisor or Reacher and set up your profile.</li>
+                      <li>Supervisors can create outreaches and add reachers.</li>
+                      <li>Reachers can join outreaches and record new converts.</li>
+                    </ul>
+                    <h4 className="font-bold mt-4">📅 Creating an Outreach</h4>
+                    <ul>
+                        <li>Supervisors tap “New Outreach” to create one.</li>
+                        <li>Add outreach name, description, and date.</li>
+                        <li>Assign reachers to the outreach and track progress in real-time.</li>
+                    </ul>
+                    <h4 className="font-bold mt-4">🙌 Adding New Converts</h4>
+                     <ul>
+                        <li>During outreach, reachers add names and phone numbers of new converts.</li>
+                        <li>Supervisors can view and organize all contacts under each outreach.</li>
+                    </ul>
+                    <h4 className="font-bold mt-4">📲 Automated Messages</h4>
+                     <ul>
+                        <li>Enable automatic WhatsApp or SMS reminders to encourage follow-up.</li>
+                        <li>Customize message templates from Settings → Communication.</li>
+                    </ul>
+                    <h4 className="font-bold mt-4">⚙️ Troubleshooting</h4>
+                     <ul>
+                        <li>If notifications or syncing fail, check your internet connection.</li>
+                        <li>Ensure permissions for Contacts and Notifications are enabled.</li>
+                        <li>Still stuck? Contact support@reachapp.org for help.</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="terms-of-service">
+                  <AccordionTrigger>
+                     <div className="flex items-center gap-2">
+                        <FileText /> Terms of Service
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
+                    <p>By using REACH, you agree to uphold integrity and respect in all interactions.</p>
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li><b>Purpose of REACH:</b> REACH is designed to support church and outreach teams in managing evangelism and follow-up.</li>
+                      <li><b>Responsible Use:</b> Users must not use REACH for spam, harassment, or unrelated activities. Supervisors must ensure all outreach data is used ethically and lawfully.</li>
+                      <li><b>Data and Content:</b> You are responsible for the accuracy of any information you upload. Do not share sensitive personal data without consent.</li>
+                      <li><b>Modifications:</b> We may update REACH or these Terms at any time. Continued use means you accept any updates.</li>
+                      <li><b>Account Termination:</b> We reserve the right to suspend or terminate accounts that misuse the app or violate these terms.</li>
+                    </ol>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="privacy-policy">
+                  <AccordionTrigger>
+                     <div className="flex items-center gap-2">
+                        <FileText /> Privacy Policy
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
+                    <p>Your privacy matters to us.</p>
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li><b>Information We Collect:</b> We collect basic details like your name, phone number, and outreach activity to improve your experience.</li>
+                      <li><b>How We Use It:</b> Your data helps organize outreaches, manage contacts, and automate follow-ups. Only authorized team members (supervisors and assigned reachers) can access relevant outreach data.</li>
+                      <li><b>Data Security:</b> We use secure storage and encryption to protect your information. REACH never sells or shares your data with third parties.</li>
+                      <li><b>Your Rights:</b> You can request your data to be deleted or exported anytime by contacting privacy@reachapp.org.</li>
+                      <li><b>Children’s Privacy:</b> REACH is intended for users above 13 years old and for church or outreach use only.</li>
+                    </ol>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="about-reach">
+                  <AccordionTrigger>
+                     <div className="flex items-center gap-2">
+                        <Info /> About REACH
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
+                    <h4 className="font-bold mt-2">Our Mission</h4>
+                    <p>To help believers connect, follow up, and nurture new converts with love and consistency.</p>
+                    <h4 className="font-bold mt-4">What We Do</h4>
+                    <p>REACH makes evangelism follow-up easy:</p>
+                     <ul>
+                        <li>Organize outreaches and track participation.</li>
+                        <li>Collect and manage new convert contacts.</li>
+                        <li>Automate reminders to help them grow in faith.</li>
+                        <li>Build community through team collaboration and encouragement.</li>
+                    </ul>
+                    <h4 className="font-bold mt-4">Who We Serve</h4>
+                    <p>Churches, campus ministries, and outreach teams who want to stay organized and intentional about soul-winning.</p>
+                    <h4 className="font-bold mt-4">Our Vision</h4>
+                    <p>To see every soul reached, nurtured, and established in the faith — one connection at a time.</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
