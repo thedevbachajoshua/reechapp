@@ -1,0 +1,172 @@
+{
+  "entities": {
+    "Outreach": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Outreach",
+      "type": "object",
+      "description": "Represents an outreach event organized by a coordinator.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Outreach entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the outreach event."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the outreach event."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location where the outreach event takes place."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the outreach event.",
+          "format": "date-time"
+        },
+        "coordinatorId": {
+          "type": "string",
+          "description": "Reference to User (Coordinator). (Relationship: User 1:N Outreach)"
+        },
+        "participantIds": {
+          "type": "array",
+          "description": "References to Users (Reachers). (Relationship: User N:N Outreach)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "newConvertIds": {
+          "type": "array",
+          "description": "References to NewConvert objects (Relationship: Outreach 1:N NewConvert)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the outreach event (planned, ongoing, completed)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the outreach event was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the outreach event was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "location",
+        "date",
+        "coordinatorId",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "NewConvert": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NewConvert",
+      "type": "object",
+      "description": "Represents a new believer encountered during an outreach event.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the NewConvert entity."
+        },
+        "outreachId": {
+          "type": "string",
+          "description": "Reference to Outreach. (Relationship: Outreach 1:N NewConvert)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the new convert."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the new convert."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the new convert (e.g., just met, follow-up scheduled)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes about the new convert."
+        },
+        "assignedTo": {
+          "type": "string",
+          "description": "Reference to User (Reacher) assigned to follow up with the new convert. (Relationship: User 1:N NewConvert)"
+        }
+      },
+      "required": [
+        "id",
+        "outreachId",
+        "name",
+        "phone",
+        "status",
+        "notes",
+        "assignedTo"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "users/{userId}/outreach_events/{outreachId}",
+        "definition": {
+          "entityName": "Outreach",
+          "schema": {
+            "$ref": "#/backend/entities/Outreach"
+          },
+          "description": "Represents outreach events created by a specific coordinator. Includes denormalized 'participantIds' array for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the coordinator (user) who created the outreach event."
+            },
+            {
+              "name": "outreachId",
+              "description": "The unique ID of the outreach event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "outreach_events/{outreachId}/new_converts/{newConvertId}",
+        "definition": {
+          "entityName": "NewConvert",
+          "schema": {
+            "$ref": "#/backend/entities/NewConvert"
+          },
+          "description": "Represents new converts associated with a specific outreach event. Includes denormalized 'outreachId' for authorization independence. Includes also `assignedTo` to store the `userId` of the reacher assigned to follow up with the new convert.",
+          "params": [
+            {
+              "name": "outreachId",
+              "description": "The ID of the outreach event to which the new convert belongs."
+            },
+            {
+              "name": "newConvertId",
+              "description": "The unique ID of the new convert."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the Outreach feature, focusing on authorization independence, clarity, and scalability. It leverages path-based ownership for user-related data and denormalization to avoid complex security rules that require `get()` calls. The structure supports secure `list` operations (QAPs) by segregating data based on ownership and role. \n\n`users/{userId}/outreach_events/{outreachId}`:\nThis path establishes clear ownership of outreach events by coordinators. The coordinator, identified by `userId`, has exclusive access to create, update, and delete outreach events under their control. Participants are managed through denormalized `participantIds` array within each `outreach_events` document to maintain authorization independence. Security rules can easily enforce that only the coordinator (`userId`) can modify these documents.\n\n`outreach_events/{outreachId}/new_converts/{newConvertId}`:\nThis structure enables each outreach event to manage its new converts. The `new_converts` subcollection is designed to store contact information and follow-up notes for each new convert. The `outreachId` is denormalized within each `new_converts` document to enforce the relationship and allow simple querying of new converts associated with a specific outreach event. Also, `assignedTo` field within the `new_converts` documents stores the `userId` of the reacher assigned to follow up with the new convert.\n\nTo achieve Authorization Independence:\nThe `coordinatorId` is stored in the `outreach_events` collection and the `outreachId` is stored in the `new_converts` collection. This eliminates the need for `get()` calls to verify the coordinator's ownership of the outreach or the reacher's assignment to the new convert.\n\nTo enable QAPs:\nEach `outreach_events` document contains a `participantIds` array, representing the members of the outreach. Security rules can allow listing only if the authenticated user's `uid` is in the `participantIds` list, securing the list operation without filtering data after retrieval."
+  }
+}
