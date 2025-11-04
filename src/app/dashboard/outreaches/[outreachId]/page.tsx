@@ -1,31 +1,203 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { outreachEvents } from '@/lib/data';
 import { useParams } from 'next/navigation';
-import { Calendar, HeartHandshake, MapPin, Users, Check, Clock } from 'lucide-react';
+import { Calendar, HeartHandshake, MapPin, Users, Check, Clock, PlusCircle, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Header from '@/components/layout/header';
+import { useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, collection, query, where, documentId, addDoc } from 'firebase/firestore';
+import { useDoc, useCollection } from '@/firebase';
+import type { UserProfile } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { useUserContext } from '@/context/user-context';
+
+type OutreachEvent = {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  status: 'Planned' | 'Ongoing' | 'Completed';
+  participantIds: string[];
+  coordinatorId: string;
+};
+
+type NewConvert = {
+  id: string;
+  name: string;
+  phone: string;
+  status: 'Just Met' | 'Contacted' | 'Follow-up Scheduled';
+  assignedTo: string;
+  notes: string;
+};
+
+const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
+    const firestore = useFirestore();
+
+    const participantsQuery = useMemoFirebase(() => {
+        if (!firestore || !participantIds || participantIds.length === 0) return null;
+        return query(collection(firestore, 'users'), where(documentId(), 'in', participantIds));
+    }, [firestore, participantIds]);
+
+    const { data: participants, isLoading } = useCollection<UserProfile>(participantsQuery);
+
+    if (isLoading) return <Skeleton className="h-10 w-full" />;
+
+    return (
+        <div className="flex flex-wrap gap-4">
+            {participants?.map((p) => (
+                <div key={p.uid} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                    <Avatar className="h-8 w-8 border-2 border-background">
+                        <AvatarImage src={p.photoURL} data-ai-hint="person face" />
+                        <AvatarFallback>{p.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{p.name}</span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const AssignedReacher = ({ reacherId }: { reacherId: string }) => {
+    const firestore = useFirestore();
+    const reacherRef = useMemoFirebase(() => firestore ? doc(firestore, 'users', reacherId) : null, [firestore, reacherId]);
+    const { data: reacher, isLoading } = useDoc<UserProfile>(reacherRef);
+
+    if (isLoading) return <Skeleton className="h-5 w-24" />;
+    return <span className="text-sm">{reacher?.name}</span>;
+}
+
+const addConvertSchema = z.object({
+  name: z.string().min(2, 'Name is required'),
+  phone: z.string().min(10, 'A valid phone number is required'),
+  notes: z.string().optional(),
+});
+
+const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onFinished: () => void }) => {
+    const { toast } = useToast();
+    const firestore = useFirestore();
+    const { user } = useUserContext();
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+    const form = useForm<z.infer<typeof addConvertSchema>>({
+        resolver: zodResolver(addConvertSchema),
+        defaultValues: { name: '', phone: '', notes: '' }
+    });
+
+    const onSubmit = async (values: z.infer<typeof addConvertSchema>) => {
+        if (!firestore || !user) return;
+        setIsSubmitting(true);
+
+        try {
+            const convertsCollection = collection(firestore, 'outreaches', outreachId, 'new_converts');
+            await addDoc(convertsCollection, {
+                ...values,
+                outreachId,
+                status: 'Just Met',
+                assignedTo: user.uid, // Assign to the current user by default
+                createdAt: new Date().toISOString()
+            });
+
+            toast({ title: "New Convert Added", description: `${values.name} has been recorded.` });
+            onFinished();
+            form.reset();
+
+        } catch (error) {
+            console.error("Error adding new convert: ", error);
+            toast({ variant: 'destructive', title: "Error", description: "Could not add new convert." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    return (
+         <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl><Input placeholder="555-123-4567" {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="notes" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Notes (Optional)</FormLabel>
+                        <FormControl><Textarea placeholder="Initial conversation details..." {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}/>
+                 <div className="flex justify-end pt-2">
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Add Convert
+                    </Button>
+                </div>
+            </form>
+         </Form>
+    )
+
+}
 
 export default function OutreachDetailPage() {
   const params = useParams();
-  const { outreachId } = params;
+  const { outreachId } = params as { outreachId: string };
+  const firestore = useFirestore();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
-  const event = outreachEvents.find((e) => e.id.toString() === outreachId);
+  const eventRef = useMemoFirebase(() => (firestore && outreachId ? doc(firestore, 'outreaches', outreachId) : null), [firestore, outreachId]);
+  const { data: event, isLoading: isLoadingEvent } = useDoc<OutreachEvent>(eventRef);
+
+  const convertsQuery = useMemoFirebase(() => (firestore && outreachId ? collection(firestore, 'outreaches', outreachId, 'new_converts') : null), [firestore, outreachId]);
+  const { data: newConverts, isLoading: isLoadingConverts } = useCollection<NewConvert>(convertsQuery);
+
+  if (isLoadingEvent) {
+    return (
+      <div className="space-y-6">
+        <Header pageTitle="Loading..." />
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-6 w-3/4" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48 lg:col-span-2" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-12">
-        <h1 className="text-2xl font-bold">Outreach Not Found</h1>
-        <p className="text-muted-foreground">The outreach event you are looking for does not exist.</p>
-        <Button asChild className="mt-4">
-          <Link href="/dashboard/outreaches">Back to Outreaches</Link>
-        </Button>
-      </div>
+      <>
+        <Header pageTitle="Not Found" />
+        <div className="flex flex-col items-center justify-center text-center py-12">
+          <h1 className="text-2xl font-bold">Outreach Not Found</h1>
+          <p className="text-muted-foreground">The outreach event you are looking for does not exist.</p>
+          <Button asChild className="mt-4">
+            <Link href="/dashboard/outreaches">Back to Outreaches</Link>
+          </Button>
+        </div>
+      </>
     )
   }
   
@@ -43,7 +215,7 @@ export default function OutreachDetailPage() {
        <div>
           <h1 className="text-3xl font-bold font-headline">{event.title}</h1>
           <p className="text-muted-foreground flex items-center gap-4">
-            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {event.date}</span>
+            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}</span>
             <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {event.location}</span>
           </p>
         </div>
@@ -56,11 +228,11 @@ export default function OutreachDetailPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5" /> Reachers</span>
-              <span className="font-bold">{event.participants.length}</span>
+              <span className="font-bold">{event.participantIds.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><HeartHandshake className="h-5 w-5" /> New Converts</span>
-              <span className="font-bold">{event.newConverts.length}</span>
+              <span className="font-bold">{isLoadingConverts ? <Loader2 className="h-4 w-4 animate-spin" /> : newConverts?.length ?? 0}</span>
             </div>
              <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><Clock className="h-5 w-5" /> Status</span>
@@ -76,30 +248,47 @@ export default function OutreachDetailPage() {
                 <CardDescription>Team members involved in this outreach.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="flex flex-wrap gap-4">
-                    {event.participants.map((p) => (
-                      <div key={p.name} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                        <Avatar className="h-8 w-8 border-2 border-background">
-                            <AvatarImage src={p.avatar} data-ai-hint="person face"/>
-                            <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{p.name}</span>
-                      </div>
-                    ))}
-                </div>
+                <OutreachParticipants participantIds={event.participantIds} />
             </CardContent>
         </Card>
       </div>
 
        <Card>
-        <CardHeader>
-          <CardTitle>New Converts</CardTitle>
-          <CardDescription>
-            Individuals who have accepted Christ during this event.
-          </CardDescription>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>New Converts</CardTitle>
+            <CardDescription>
+              Individuals who have accepted Christ during this event.
+            </CardDescription>
+          </div>
+           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Convert
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Convert</DialogTitle>
+                  <DialogDescription>
+                    Record a new believer met during this outreach.
+                  </DialogDescription>
+                </DialogHeader>
+                <AddNewConvertForm 
+                    outreachId={outreachId} 
+                    onFinished={() => setIsDialogOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
         </CardHeader>
         <CardContent>
-            {event.newConverts.length > 0 ? (
+            {isLoadingConverts && <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" /></div>}
+            {!isLoadingConverts && (!newConverts || newConverts.length === 0) ? (
+                <div className="text-center text-muted-foreground py-8">
+                    <p>No new converts have been recorded for this outreach yet.</p>
+                </div>
+            ) : (
                  <div className="rounded-lg border">
                     <Table>
                         <TableHeader>
@@ -112,8 +301,8 @@ export default function OutreachDetailPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {event.newConverts.map((convert, index) => (
-                                <TableRow key={index}>
+                            {newConverts?.map((convert) => (
+                                <TableRow key={convert.id}>
                                     <TableCell className="font-medium">{convert.name}</TableCell>
                                     <TableCell>{convert.phone}</TableCell>
                                     <TableCell>
@@ -121,21 +310,18 @@ export default function OutreachDetailPage() {
                                             {convert.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{convert.assignedTo}</TableCell>
+                                    <TableCell>
+                                        <AssignedReacher reacherId={convert.assignedTo} />
+                                    </TableCell>
                                     <TableCell className="text-muted-foreground">{convert.notes}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 </div>
-            ) : (
-                <div className="text-center text-muted-foreground py-8">
-                    <p>No new converts have been recorded for this outreach yet.</p>
-                </div>
             )}
         </CardContent>
       </Card>
-
     </div>
     </>
   );
