@@ -1,5 +1,5 @@
 /**
- * @file Firestore Security Rules for the Outreach feature with role-based access.
+ * @file Firestore Security Rules for the REECH feature with role-based access.
  *
  * Core Philosophy:
  * This ruleset enforces a strict user-ownership and role-based model.
@@ -13,14 +13,14 @@
  *   - `participantIds` is an array of user IDs of assigned Reachers.
  * - /outreaches/{outreachId}/new_converts/{newConvertId}: New converts for an event.
  *   - `assignedTo` is the `userId` of the reacher assigned to follow up.
+ * - /scheduled_follow_ups/{followUpId}: Messages to be sent later.
  *
  * Key Security Decisions:
  * - User profile data is readable by any authenticated user, but only writable by the user themselves.
- *   The 'role' field cannot be changed by the user after it has been set, but this logic is now simplified.
+ *   The 'role' field cannot be changed by the user after it has been set.
  * - Supervisors can create, read, update, and delete any outreach event.
  * - Reachers can only read outreach events they are a participant in.
- * - Supervisors can manage new converts in any outreach.
- * - Reachers can create new converts and update converts assigned to them.
+ * - Supervisors and Reachers can create/read scheduled follow-ups.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -68,7 +68,6 @@ service cloud.firestore {
       allow update, delete: if isSupervisor();
     }
 
-d
     match /outreaches/{outreachId}/new_converts/{newConvertId} {
       function isOutreachParticipant() {
           let outreach = get(/databases/$(database)/documents/outreaches/$(outreachId));
@@ -86,6 +85,20 @@ d
       allow update: if isSupervisor() || isAssignedReacher();
 
       allow delete: if isSupervisor();
+    }
+
+    match /scheduled_follow_ups/{followUpId} {
+        // Any authenticated user can see all scheduled messages for UI purposes.
+        allow list, read: if isSignedIn();
+        
+        // Any authenticated user can create a scheduled message for a contact.
+        // The `creatorId` field ensures we know who made it.
+        allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+
+        // In a real app, only a backend service role should be able to update/delete these.
+        // For now, we allow the creator to delete their own scheduled message.
+        allow delete: if isOwner(resource.data.creatorId);
+        allow update: if false; // Prevent client-side updates to sent status etc.
     }
   }
 }

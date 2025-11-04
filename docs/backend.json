@@ -130,6 +130,22 @@
         "notes",
         "assignedTo"
       ]
+    },
+    "ScheduledFollowUp": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Scheduled Follow-Up",
+      "type": "object",
+      "description": "A message scheduled to be sent to a contact at a future time.",
+      "properties": {
+        "contactId": { "type": "string", "description": "The ID of the NewConvert contact." },
+        "contactName": { "type": "string" },
+        "contactAvatar": { "type": "string", "format": "uri" },
+        "message": { "type": "string", "description": "The content of the message to be sent." },
+        "scheduledFor": { "type": "string", "format": "date-time", "description": "The ISO 8601 timestamp when the message should be sent." },
+        "status": { "type": "string", "enum": ["Scheduled", "Sent", "Failed"], "description": "The current status of the scheduled message." },
+        "creatorId": { "type": "string", "description": "The ID of the user who scheduled the follow-up." }
+      },
+      "required": ["contactId", "contactName", "message", "scheduledFor", "status", "creatorId"]
     }
   },
   "auth": {
@@ -184,8 +200,18 @@
             }
           ]
         }
+      },
+      {
+        "path": "scheduled_follow_ups/{followUpId}",
+        "definition": {
+          "entityName": "ScheduledFollowUp",
+          "schema": {
+            "$ref": "#/backend/entities/ScheduledFollowUp"
+          },
+          "description": "Stores follow-up messages to be sent by an automated backend process."
+        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support role-based access control. The new 'users' collection stores a 'role' for each user. This role is checked in security rules to grant appropriate permissions for accessing 'outreaches' and 'new_converts' data. Denormalization is still used to avoid extra `get()` calls where possible."
+    "reasoning": "The Firestore data structure is designed to support role-based access control. The new 'users' collection stores a 'role' for each user. This role is checked in security rules to grant appropriate permissions. A new 'scheduled_follow_ups' collection is added to store messages for future delivery."
   }
 }

@@ -87,11 +87,7 @@ export const stats = [
     { id: 4, name: 'Linda Davis', email: 'linda.d@example.com', phone: '456-789-0123', status: 'New', dateAdded: '2023-06-02' },
   ];
   
-  export const followUps = [
-    { id: 1, contactName: 'Peter Jones', contactAvatar: 'https://picsum.photos/seed/followup1/40/40', scheduledFor: 'June 15, 2024', message: 'Hey Peter, just checking in to see how you are doing. Hope you have a blessed week!', status: 'Scheduled' },
-    { id: 2, contactName: 'Mary Williams', contactAvatar: 'https://picsum.photos/seed/followup2/40/40', scheduledFor: 'June 12, 2024', message: 'Hi Mary, wanted to share a verse that I thought of for you today. Let me know if you want to chat.', status: 'Sent' },
-    { id: 3, contactName: 'David Miller', contactAvatar: 'https://picsum.photos/seed/followup3/40/40', scheduledFor: 'June 18, 2024', message: 'David, looking forward to connecting soon. Praying for you!', status: 'Scheduled' },
-  ];
+  export const followUps: [] = [];
   
   export type DevotionalPost = {
       id: number;
