@@ -13,7 +13,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       <SidebarInset>
         {!isDetailPage && <Header />}
-        {children}
+        <main className="p-4 md:p-6 lg:p-8">
+            {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
