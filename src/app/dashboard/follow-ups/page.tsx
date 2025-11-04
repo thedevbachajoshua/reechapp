@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import {
   collection,
   addDoc,
@@ -59,20 +59,23 @@ export default function FollowUpsPage() {
   const handleSendNow = async (followUpId: string) => {
     if (!firestore) return;
     const followUpRef = doc(firestore, 'scheduled_follow_ups', followUpId);
-    try {
-      await updateDoc(followUpRef, { status: 'Sent' });
-      toast({
-        title: 'Message Sent!',
-        description: 'The follow-up has been marked as sent.',
-      });
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not send the message.',
-      });
-    }
+    const updateData = { status: 'Sent' };
+    
+    updateDoc(followUpRef, updateData)
+        .then(() => {
+            toast({
+                title: 'Message Sent!',
+                description: 'The follow-up has been marked as sent.',
+            });
+        })
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: followUpRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
   };
 
   return (

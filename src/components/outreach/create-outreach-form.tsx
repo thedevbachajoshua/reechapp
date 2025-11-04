@@ -21,13 +21,14 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, query, where } from 'firebase/firestore';
+import { addDoc, collection, query, where } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { UserProfile } from '@/lib/data';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
 import { Badge } from '../ui/badge';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -82,7 +83,15 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
     };
 
     const outreachesCollection = collection(firestore, 'outreaches');
-    addDocumentNonBlocking(outreachesCollection, newOutreach);
+    addDoc(outreachesCollection, newOutreach)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: outreachesCollection.path,
+          operation: 'create',
+          requestResourceData: newOutreach,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
     
     toast({
       title: "Outreach Created!",
