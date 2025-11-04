@@ -28,48 +28,66 @@ function BreadcrumbGenerator({ pathname }: { pathname: string }) {
     return (
         <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
-                <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link href="/dashboard">Dashboard</Link>
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
-                {segments.length > 1 && segments.map((segment, index) => {
-                    const isLast = index === segments.length - 1;
-                    const isDynamic = segment.startsWith('[') && segment.endsWith(']');
-                    // If it is the first segment, it is 'dashboard'. We don't want to show it again.
-                    if (index === 0) return null;
+                {segments.length <= 2 ? (
+                     <BreadcrumbItem>
+                        <BreadcrumbPage>{pathToTitle[pathname] || 'Page'}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                ) : (
+                    <>
+                        <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                              <Link href="/dashboard">Dashboard</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        {segments.map((segment, index) => {
+                            if (index === 0) return null; // skip 'dashboard'
 
-                    const href = `/${segments.slice(0, index + 1).join('/')}`;
-                    const parentHref = `/${segments.slice(0, index).join('/')}`;
-                    
-                    const name = pathToTitle[href] || (isDynamic ? 'Details' : segment.charAt(0).toUpperCase() + segment.slice(1));
-                    
-                    if (isDynamic) {
-                        return (
-                             <React.Fragment key={href}>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage>{name}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </React.Fragment>
-                        )
-                    }
+                            const isLast = index === segments.length - 1;
+                            const href = `/${segments.slice(0, index + 1).join('/')}`;
+                            
+                            // For a path like /dashboard/outreaches/[outreachId], the parent is /dashboard/outreaches
+                            const parentHref = `/${segments.slice(0, index).join('/')}`;
+                            const isDynamic = segment.startsWith('[') && segment.endsWith(']');
+                            
+                            const name = isDynamic 
+                                ? 'Details' // Or fetch the actual name if available
+                                : pathToTitle[href] || segment.charAt(0).toUpperCase() + segment.slice(1);
+                            
+                            const parentName = pathToTitle[parentHref];
+                            
+                            // This part handles the breadcrumb for the dynamic part of the URL
+                            if (index === 1) { // e.g. 'outreaches'
+                                 return (
+                                    <React.Fragment key={href}>
+                                        <BreadcrumbSeparator />
+                                        <BreadcrumbItem>
+                                            {isLast ? (
+                                                <BreadcrumbPage>{name}</BreadcrumbPage>
+                                            ) : (
+                                                <BreadcrumbLink asChild>
+                                                    <Link href={href}>{name}</Link>
+                                                </BreadcrumbLink>
+                                            )}
+                                        </BreadcrumbItem>
+                                    </React.Fragment>
+                                );
+                            }
 
-                    return (
-                        <React.Fragment key={href}>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                {isLast ? (
-                                    <BreadcrumbPage>{name}</BreadcrumbPage>
-                                ) : (
-                                    <BreadcrumbLink asChild>
-                                      <Link href={href}>{name}</Link>
-                                    </BreadcrumbLink>
-                                )}
-                            </BreadcrumbItem>
-                        </React.Fragment>
-                    );
-                })}
+                            if (isDynamic) {
+                                return (
+                                    <React.Fragment key={href}>
+                                        <BreadcrumbSeparator />
+                                        <BreadcrumbItem>
+                                            <BreadcrumbPage>{name}</BreadcrumbPage>
+                                        </BreadcrumbItem>
+                                    </React.Fragment>
+                                )
+                            }
+
+                            return null;
+                        })}
+                    </>
+                )}
             </BreadcrumbList>
         </Breadcrumb>
     )
