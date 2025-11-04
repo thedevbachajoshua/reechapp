@@ -20,7 +20,7 @@ import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, query, where } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
@@ -46,9 +46,11 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
   const firestore = useFirestore();
   const { user, userProfile } = useUserContext();
 
-  const { data: reachers, isLoading: isLoadingReachers } = useCollection<UserProfile>(
-    firestore ? query(collection(firestore, 'users'), where('role', '==', 'Reacher')) : null
+  const reachersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'Reacher')) : null),
+    [firestore]
   );
+  const { data: reachers, isLoading: isLoadingReachers } = useCollection<UserProfile>(reachersQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
