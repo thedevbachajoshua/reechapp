@@ -89,4 +89,48 @@ export const stats = [
     { id: 2, title: 'The Community of Believers', author: 'Jane Doe', image: 'https://picsum.photos/seed/devotional4/600/400', imageHint: 'community fellowship', content: 'We are not meant to walk this path alone. Hebrews 10:24-25 calls us to gather, encourage, and build each other up in faith and love.' },
     { id: 3, title: 'A Heart of Gratitude', author: 'Emily White', image: 'https://picsum.photos/seed/devotional3/600/400', imageHint: 'spiritual growth', content: 'Cultivating gratitude transforms our perspective. Join us in reflecting on 1 Thessalonians 5:18 and the power of giving thanks in all circumstances.' },
   ];
+
+  export const outreachEvents = [
+    {
+        id: 1,
+        title: 'Community Cookout',
+        date: 'July 20, 2024',
+        location: 'City Park',
+        status: 'Planned' as 'Planned' | 'Ongoing' | 'Completed',
+        newConverts: 0,
+        participants: [
+            { name: 'John Doe', avatar: 'https://picsum.photos/seed/coordinator/40/40' },
+            { name: 'Jane Doe', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
+            { name: 'Alex Smith', avatar: 'https://picsum.photos/seed/avatar2/40/40' },
+        ],
+    },
+    {
+        id: 2,
+        title: 'Campus Outreach',
+        date: 'June 15, 2024',
+        location: 'University Plaza',
+        status: 'Ongoing' as 'Planned' | 'Ongoing' | 'Completed',
+        newConverts: 8,
+        participants: [
+            { name: 'John Doe', avatar: 'https://picsum.photos/seed/coordinator/40/40' },
+            { name: 'Emily White', avatar: 'https://picsum.photos/seed/avatar3/40/40' },
+            { name: 'Michael Brown', avatar: 'https://picsum.photos/seed/avatar4/40/40' },
+            { name: 'Sarah Green', avatar: 'https://picsum.photos/seed/avatar5/40/40' },
+            { name: 'David Miller', avatar: 'https://picsum.photos/seed/avatar6/40/40' },
+            { name: 'Linda Davis', avatar: 'https://picsum.photos/seed/avatar7/40/40' },
+        ],
+    },
+    {
+        id: 3,
+        title: 'Homeless Shelter Visit',
+        date: 'May 30, 2024',
+        location: 'Downtown Shelter',
+        status: 'Completed' as 'Planned' | 'Ongoing' | 'Completed',
+        newConverts: 4,
+        participants: [
+            { name: 'John Doe', avatar: 'https://picsum.photos/seed/coordinator/40/40' },
+            { name: 'Jane Doe', avatar: 'https://picsum.photos/seed/avatar1/40/40' },
+        ],
+    },
+  ];
   

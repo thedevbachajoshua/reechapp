@@ -18,6 +18,7 @@ import {
   Sparkles,
   LogOut,
   Settings,
+  Flame,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter } from 'next/navigation';
@@ -25,6 +26,7 @@ import Link from 'next/link';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/outreaches', label: 'Outreaches', icon: Flame },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users },
   { href: '/dashboard/follow-ups', label: 'Follow-ups', icon: MessageSquare },
   { href: '/dashboard/feed', label: 'Discipleship Feed', icon: BookOpen },
@@ -52,7 +54,7 @@ export default function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href === '/dashboard' ? pathname === item.href : true)}
                 tooltip={item.label}
               >
                 <Link href={item.href}>

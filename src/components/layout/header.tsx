@@ -15,6 +15,7 @@ import { HeartHandshake } from 'lucide-react';
 
 const pathToTitle: { [key: string]: string } = {
     '/dashboard': 'Dashboard',
+    '/dashboard/outreaches': 'Outreaches',
     '/dashboard/contacts': 'Contacts',
     '/dashboard/follow-ups': 'Follow-ups',
     '/dashboard/feed': 'Discipleship Feed',
