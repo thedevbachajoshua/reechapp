@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Loader2, Shield, User, HelpCircle, FileText, Info } from 'lucide-react';
+import { Loader2, Shield, User, HelpCircle, FileText, Info, Camera } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import type { UserProfile } from '@/lib/data';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { UpdateProfilePicture } from '@/components/settings/update-profile-picture';
+
 
 const profileFormSchema = {
   name: (value: string) => value.length > 0 ? null : "Name is required",
@@ -39,6 +42,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
+  const [isPictureDialogOpen, setIsPictureDialogOpen] = useState(false);
   
   const handleSaveChanges = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,6 +105,29 @@ export default function SettingsPage() {
     }
   };
 
+  const handleProfilePictureUpdate = async (newPhotoUrl: string) => {
+    if (!user || !firestore) return;
+
+    try {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await setDoc(userDocRef, { photoURL: newPhotoUrl }, { merge: true });
+        await forceRefresh();
+        toast({
+            title: 'Profile Picture Updated',
+            description: 'Your new profile picture has been saved.',
+        });
+    } catch (error) {
+        console.error('Error updating profile picture:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not update your profile picture.',
+        });
+    } finally {
+        setIsPictureDialogOpen(false);
+    }
+  };
+
 
   if (loading || !userProfile || !user) {
     return (
@@ -133,14 +160,36 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex items-center gap-6">
-                    <Avatar className="h-24 w-24">
-                        <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
-                        <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="grid w-full max-w-sm items-center gap-1.5">
-                        <Label htmlFor="photoURL">Profile Picture URL</Label>
-                        <Input id="photoURL" name="photoURL" type="url" defaultValue={userProfile.photoURL || ''} />
-                    </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <Avatar className="h-24 w-24">
+                          <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
+                          <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <Dialog open={isPictureDialogOpen} onOpenChange={setIsPictureDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    Change Picture
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Update Profile Picture</DialogTitle>
+                                    <DialogDescription>
+                                        Take a new photo or upload one from your gallery.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <UpdateProfilePicture 
+                                  onPictureSelected={handleProfilePictureUpdate}
+                                  currentPicture={userProfile.photoURL}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                      </div>
+                      <div className="grid w-full max-w-sm items-center gap-1.5">
+                          <Label htmlFor="photoURL">Profile Picture URL</Label>
+                          <Input id="photoURL" name="photoURL" type="url" defaultValue={userProfile.photoURL || ''} />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
