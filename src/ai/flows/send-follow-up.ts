@@ -80,7 +80,7 @@ const sendFollowUpMessageFlow = ai.defineFlow(
           // This is a conceptual payload. You will need to adjust it based on
           // Zixflow's documentation for sending an SMS or WhatsApp message.
           to: input.contactPhoneNumber,
-          text: personalizedMessage,
+          body: personalizedMessage, // Using 'body' as it's more common than 'text'
           // You might need a channel ID for SMS or WhatsApp
           // channelId: 'your_zixflow_channel_id' 
         }),

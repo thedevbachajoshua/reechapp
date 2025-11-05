@@ -33,6 +33,10 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { ScheduleFollowUpForm } from '@/components/follow-ups/schedule-follow-up-form';
+import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
+import { useUserContext } from '@/context/user-context';
+import { Contact } from '@/app/dashboard/contacts/page';
+
 
 export type FollowUp = {
   id: string;
@@ -46,8 +50,10 @@ export type FollowUp = {
 
 export default function FollowUpsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { user } = useUserContext();
 
   const followUpsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -56,26 +62,68 @@ export default function FollowUpsPage() {
 
   const { data: followUps, isLoading } = useCollection<FollowUp>(followUpsQuery);
 
-  const handleSendNow = async (followUpId: string) => {
+  const contactsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'contacts'));
+  }, [firestore, user]);
+
+  const { data: contacts } = useCollection<Contact>(contactsQuery);
+
+  const handleSendNow = async (followUp: FollowUp) => {
     if (!firestore) return;
-    const followUpRef = doc(firestore, 'scheduled_follow_ups', followUpId);
-    const updateData = { status: 'Sent' };
-    
-    updateDoc(followUpRef, updateData)
-        .then(() => {
-            toast({
-                title: 'Message Sent!',
-                description: 'The follow-up has been marked as sent.',
-            });
-        })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: followUpRef.path,
-                operation: 'update',
-                requestResourceData: updateData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
+    setSendingId(followUp.id);
+
+    const contact = contacts?.find(c => c.id === followUp.contactId);
+    if (!contact) {
+      toast({
+        variant: 'destructive',
+        title: 'Contact not found',
+        description: 'The contact for this follow-up could not be found.',
+      });
+      setSendingId(null);
+      return;
+    }
+
+    try {
+      const result = await sendFollowUpMessage({
+        contactName: contact.name,
+        contactPhoneNumber: contact.phone,
+        contactDetails: `Follow-up for: ${followUp.message}`,
+        outreachTitle: 'a scheduled follow-up',
+      });
+
+      if (result.status.startsWith('Failed')) {
+        throw new Error(result.status);
+      }
+      
+      const followUpRef = doc(firestore, 'scheduled_follow_ups', followUp.id);
+      const updateData = { status: 'Sent' };
+      
+      await updateDoc(followUpRef, updateData).catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: followUpRef.path,
+          operation: 'update',
+          requestResourceData: updateData,
         });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError; // throw it to be caught by the outer catch
+      });
+
+      toast({
+        title: 'Message Sent!',
+        description: 'The follow-up has been successfully sent.',
+      });
+
+    } catch (error) {
+      console.error('Error sending follow-up now:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to Send',
+        description: (error as Error).message || 'An unexpected error occurred.',
+      });
+    } finally {
+      setSendingId(null);
+    }
   };
 
   return (
@@ -172,10 +220,15 @@ export default function FollowUpsPage() {
                         variant="outline"
                         size="sm"
                         className="w-full"
-                        onClick={() => handleSendNow(followUp.id)}
+                        onClick={() => handleSendNow(followUp)}
+                        disabled={sendingId === followUp.id}
                     >
+                      {sendingId === followUp.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
                         <Send className="mr-2 h-4 w-4" />
-                        Send Now
+                      )}
+                        {sendingId === followUp.id ? 'Sending...' : 'Send Now'}
                     </Button>
                 </CardFooter>
                )}
