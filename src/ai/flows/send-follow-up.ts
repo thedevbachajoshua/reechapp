@@ -59,8 +59,7 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     const personalizedMessage = output!.message;
 
     // 2. Send the message via an external service like Zixflow.
-    // This section is commented out until you provide your Zixflow API key in a .env file.
-    /*
+    // This section requires your Zixflow API key in a .env file.
     const apiKey = process.env.ZIXFLOW_API_KEY;
     if (!apiKey) {
       console.warn("Zixflow API key not set in .env file. Skipping message sending.");
@@ -100,10 +99,5 @@ const sendFollowUpMessageFlow = ai.defineFlow(
       console.error("Failed to send message via Zixflow:", error);
       return { message: personalizedMessage, status: 'Failed' };
     }
-    */
-   
-    // For now, we'll just return the generated message without sending it.
-    console.warn("Simulating message send. To enable sending, configure your Zixflow API key in .env and uncomment the logic in send-follow-up.ts");
-    return { message: personalizedMessage, status: 'Generated (Not Sent)' };
   }
 );
