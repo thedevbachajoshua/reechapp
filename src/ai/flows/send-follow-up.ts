@@ -9,7 +9,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import twilio from 'twilio';
 
 const SendFollowUpMessageInputSchema = z.object({
   contactName: z.string().describe("The name of the new convert."),
@@ -59,35 +58,61 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     const {output} = await prompt(input);
     const personalizedMessage = output!.message;
 
-    // 2. Send the message via an SMS/WhatsApp service like Twilio.
-    // This section is commented out until credentials are provided in .env
+    // 2. Send the message via an external service like Bitrix24.
+    // This section is commented out until you provide your Bitrix24 webhook URL in a .env file.
     /*
-    if (
-      !process.env.TWILIO_ACCOUNT_SID ||
-      !process.env.TWILIO_AUTH_TOKEN ||
-      !process.env.TWILIO_PHONE_NUMBER
-    ) {
-      console.warn("Twilio environment variables not set. Skipping message sending.");
+    const webhookUrl = process.env.BITRIX24_WEBHOOK_URL;
+    if (!webhookUrl) {
+      console.warn("Bitrix24 webhook URL not set in .env file. Skipping message sending.");
       return { message: personalizedMessage, status: 'Generated (Not Sent)' };
     }
 
-    const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-
     try {
-      await client.messages.create({
-        body: personalizedMessage,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: input.contactPhoneNumber // Ensure this is in E.164 format, e.g., +15551234567
+      // Bitrix24 APIs expect data in a specific format.
+      // This is a conceptual example. You may need to adjust the payload.
+      // For example, to send a notification to a user, you might need their Bitrix24 user ID.
+      // To send an SMS, you'd call the crm.activity.add method with the right parameters.
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // Example payload for creating an SMS activity
+          'fields[OWNER_TYPE_ID]': '3', // 3 = CONTACT
+          'fields[OWNER_ID]': 123, // The Bitrix24 ID of the contact
+          'fields[PROVIDER_ID]': 'SMS',
+          'fields[PROVIDER_TYPE_ID]': 'SMS',
+          'fields[SUBJECT]': 'Follow-up Message',
+          'fields[COMPLETED]': 'N',
+          'fields[DESCRIPTION]': personalizedMessage,
+          'fields[COMMUNICATIONS]': [
+            {
+              'VALUE': input.contactPhoneNumber,
+              'ENTITY_ID': 123, // The Bitrix24 ID of the contact
+              'ENTITY_TYPE_ID': '3' // 3 = CONTACT
+            }
+          ]
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Bitrix24 API responded with status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Bitrix24 API response:', result);
+      
       return { message: personalizedMessage, status: 'Sent' };
+
     } catch (error) {
-      console.error("Failed to send message via Twilio:", error);
+      console.error("Failed to send message via Bitrix24:", error);
       return { message: personalizedMessage, status: 'Failed' };
     }
     */
    
     // For now, we'll just return the generated message without sending it.
-    console.warn("Simulating message send. To enable sending, configure Twilio credentials in .env and uncomment the logic in send-follow-up.ts");
+    console.warn("Simulating message send. To enable sending, configure your service (e.g., Bitrix24) credentials in .env and uncomment the logic in send-follow-up.ts");
     return { message: personalizedMessage, status: 'Generated (Not Sent)' };
   }
 );
