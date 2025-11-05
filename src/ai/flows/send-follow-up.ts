@@ -58,49 +58,49 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     const {output} = await prompt(input);
     const personalizedMessage = output!.message;
 
-    // 2. Use a webhook to send the message via Zixflow.
-    // This approach is more reliable than direct API calls.
+    // 2. Send the message via Zixflow API
+    const apiKey = process.env.ZIXFLOW_API_KEY;
+    console.log('ZIXFLOW_API_KEY loaded:', !!apiKey); // Log if the key is present
 
-    // HOW TO SET THIS UP:
-    // a. In your Zixflow account, create a new webhook trigger.
-    //    This will give you a unique URL.
-    // b. Add this URL to your .env file:
-    //    ZIXFLOW_WEBHOOK_URL=https://hooks.zixflow.com/your/unique/path
-    // c. Uncomment the code below to send the generated message to your webhook.
-
-    /*
-    const webhookUrl = process.env.ZIXFLOW_WEBHOOK_URL;
-    if (!webhookUrl) {
-      console.error("Zixflow webhook URL not set in .env file. Skipping message sending.");
-      return { message: personalizedMessage, status: 'Generated' };
+    if (!apiKey) {
+      console.error("Zixflow API key not set in .env file. Skipping message sending.");
+      return { message: personalizedMessage, status: 'Generated (No API Key)' };
     }
 
     try {
-      const response = await fetch(webhookUrl, {
+      const response = await fetch('https://api.zixflow.com/v1/campaigns/sms/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
         body: JSON.stringify({
-          // This payload structure depends on how you set up your webhook in Zixflow.
-          // You might need to send the phone number and message content.
-          phone: input.contactPhoneNumber,
-          text: personalizedMessage
+            // IMPORTANT: This payload structure is based on Zixflow's documentation.
+            // It sends a single message.
+            "messages": [
+                {
+                    "to": input.contactPhoneNumber,
+                    "body": personalizedMessage
+                }
+            ]
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Webhook failed with status ${response.status}`);
+        // If the response is not ok, we try to get more details.
+        const errorBody = await response.text(); // Use .text() as it could be HTML or plain text
+        console.error(`Zixflow API Error: Status ${response.status}`, errorBody);
+        throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
       }
       
+      const responseJson = await response.json();
+      console.log('Zixflow API Success:', responseJson);
       return { message: personalizedMessage, status: 'Sent' };
 
     } catch (error) {
-      console.error("Failed to send message via Zixflow webhook:", error);
-      return { message: personalizedMessage, status: `Failed: ${(error as Error).message}` };
+      const errorMessage = (error as Error).message;
+      console.error("Failed to send message via Zixflow API:", errorMessage);
+      return { message: personalizedMessage, status: `Failed: ${errorMessage}` };
     }
-    */
-    
-    // For now, we will return the generated message without sending it.
-    // Once you add the webhook URL and uncomment the code above, it will be sent.
-    return { message: personalizedMessage, status: 'Generated' };
   }
 );
