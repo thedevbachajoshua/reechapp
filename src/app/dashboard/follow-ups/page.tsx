@@ -31,6 +31,7 @@ import {
   orderBy,
   doc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { ScheduleFollowUpForm } from '@/components/follow-ups/schedule-follow-up-form';
 import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
@@ -64,7 +65,7 @@ export default function FollowUpsPage() {
 
   const contactsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, 'contacts'));
+    return query(collection(firestore, 'contacts'), where('ownerId', '==', user.uid));
   }, [firestore, user]);
 
   const { data: contacts } = useCollection<Contact>(contactsQuery);

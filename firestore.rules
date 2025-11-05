@@ -60,6 +60,8 @@ service cloud.firestore {
       // A user can only access contacts they own.
       allow read, write: if isSignedIn() && isOwner(resource.data.ownerId);
       allow create: if isSignedIn() && isOwner(request.resource.data.ownerId);
+      // Allow a user to list the contacts that they own.
+      allow list: if isSignedIn() && request.query.where.ownerId == request.auth.uid;
     }
 
     match /outreaches/{outreachId} {
