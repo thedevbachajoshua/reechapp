@@ -62,9 +62,10 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     // This section requires your Zixflow API key in a .env file.
     const apiKey = process.env.ZIXFLOW_API_KEY;
     if (!apiKey) {
-      console.warn("Zixflow API key not set in .env file. Skipping message sending.");
-      return { message: personalizedMessage, status: 'Generated (Not Sent)' };
+      console.error("Zixflow API key not set in .env file. Skipping message sending.");
+      return { message: personalizedMessage, status: 'Failed: API Key Missing' };
     }
+    console.log("Found Zixflow API key. Proceeding to send message.");
 
     try {
       // The Zixflow API endpoint for sending messages might be different.
@@ -86,8 +87,10 @@ const sendFollowUpMessageFlow = ai.defineFlow(
       });
 
       if (!response.ok) {
+        // Log the full error response from the server for better debugging
         const errorBody = await response.text();
-        throw new Error(`Zixflow API responded with status: ${response.status}. Body: ${errorBody}`);
+        console.error(`Zixflow API responded with status: ${response.status}. Body: ${errorBody}`);
+        throw new Error(`Zixflow API request failed with status ${response.status}.`);
       }
       
       const result = await response.json();
@@ -96,8 +99,10 @@ const sendFollowUpMessageFlow = ai.defineFlow(
       return { message: personalizedMessage, status: 'Sent' };
 
     } catch (error) {
+      // Log the caught error object itself
       console.error("Failed to send message via Zixflow:", error);
-      return { message: personalizedMessage, status: 'Failed' };
+      // Provide a more detailed status in the return object
+      return { message: personalizedMessage, status: `Failed: ${(error as Error).message}` };
     }
   }
 );
