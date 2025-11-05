@@ -58,61 +58,52 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     const {output} = await prompt(input);
     const personalizedMessage = output!.message;
 
-    // 2. Send the message via an external service like Bitrix24.
-    // This section is commented out until you provide your Bitrix24 webhook URL in a .env file.
+    // 2. Send the message via an external service like Zixflow.
+    // This section is commented out until you provide your Zixflow API key in a .env file.
     /*
-    const webhookUrl = process.env.BITRIX24_WEBHOOK_URL;
-    if (!webhookUrl) {
-      console.warn("Bitrix24 webhook URL not set in .env file. Skipping message sending.");
+    const apiKey = process.env.ZIXFLOW_API_KEY;
+    if (!apiKey) {
+      console.warn("Zixflow API key not set in .env file. Skipping message sending.");
       return { message: personalizedMessage, status: 'Generated (Not Sent)' };
     }
 
     try {
-      // Bitrix24 APIs expect data in a specific format.
-      // This is a conceptual example. You may need to adjust the payload.
-      // For example, to send a notification to a user, you might need their Bitrix24 user ID.
-      // To send an SMS, you'd call the crm.activity.add method with the right parameters.
-      const response = await fetch(webhookUrl, {
+      // The Zixflow API endpoint for sending messages might be different.
+      // Please consult the Zixflow API documentation for the correct endpoint and payload structure.
+      const response = await fetch('https://api.zixflow.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          // Example payload for creating an SMS activity
-          'fields[OWNER_TYPE_ID]': '3', // 3 = CONTACT
-          'fields[OWNER_ID]': 123, // The Bitrix24 ID of the contact
-          'fields[PROVIDER_ID]': 'SMS',
-          'fields[PROVIDER_TYPE_ID]': 'SMS',
-          'fields[SUBJECT]': 'Follow-up Message',
-          'fields[COMPLETED]': 'N',
-          'fields[DESCRIPTION]': personalizedMessage,
-          'fields[COMMUNICATIONS]': [
-            {
-              'VALUE': input.contactPhoneNumber,
-              'ENTITY_ID': 123, // The Bitrix24 ID of the contact
-              'ENTITY_TYPE_ID': '3' // 3 = CONTACT
-            }
-          ]
+          // This is a conceptual payload. You will need to adjust it based on
+          // Zixflow's documentation for sending an SMS or WhatsApp message.
+          to: input.contactPhoneNumber,
+          text: personalizedMessage,
+          // You might need a channel ID for SMS or WhatsApp
+          // channelId: 'your_zixflow_channel_id' 
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Bitrix24 API responded with status: ${response.status}`);
+        const errorBody = await response.text();
+        throw new Error(`Zixflow API responded with status: ${response.status}. Body: ${errorBody}`);
       }
       
       const result = await response.json();
-      console.log('Bitrix24 API response:', result);
+      console.log('Zixflow API response:', result);
       
       return { message: personalizedMessage, status: 'Sent' };
 
     } catch (error) {
-      console.error("Failed to send message via Bitrix24:", error);
+      console.error("Failed to send message via Zixflow:", error);
       return { message: personalizedMessage, status: 'Failed' };
     }
     */
    
     // For now, we'll just return the generated message without sending it.
-    console.warn("Simulating message send. To enable sending, configure your service (e.g., Bitrix24) credentials in .env and uncomment the logic in send-follow-up.ts");
+    console.warn("Simulating message send. To enable sending, configure your Zixflow API key in .env and uncomment the logic in send-follow-up.ts");
     return { message: personalizedMessage, status: 'Generated (Not Sent)' };
   }
 );
