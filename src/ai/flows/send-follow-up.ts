@@ -68,9 +68,8 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     console.log("Found Zixflow API key. Proceeding to send message.");
 
     try {
-      // The Zixflow API endpoint for sending messages might be different.
-      // Please consult the Zixflow API documentation for the correct endpoint and payload structure.
-      const response = await fetch('https://api.zixflow.com/v1/messages', {
+      // The Zixflow API endpoint for sending messages.
+      const response = await fetch('https://api.zixflow.com/v1/campaigns/sms/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,9 +79,7 @@ const sendFollowUpMessageFlow = ai.defineFlow(
           // This is a conceptual payload. You will need to adjust it based on
           // Zixflow's documentation for sending an SMS or WhatsApp message.
           to: input.contactPhoneNumber,
-          body: personalizedMessage, // Using 'body' as it's more common than 'text'
-          // You might need a channel ID for SMS or WhatsApp
-          // channelId: 'your_zixflow_channel_id' 
+          body: personalizedMessage, 
         }),
       });
 
