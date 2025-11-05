@@ -60,6 +60,8 @@ const sendFollowUpMessageFlow = ai.defineFlow(
     const personalizedMessage = output!.message;
 
     // 2. Send the message via an SMS/WhatsApp service like Twilio.
+    // This section is commented out until credentials are provided in .env
+    /*
     if (
       !process.env.TWILIO_ACCOUNT_SID ||
       !process.env.TWILIO_AUTH_TOKEN ||
@@ -82,5 +84,10 @@ const sendFollowUpMessageFlow = ai.defineFlow(
       console.error("Failed to send message via Twilio:", error);
       return { message: personalizedMessage, status: 'Failed' };
     }
+    */
+   
+    // For now, we'll just return the generated message without sending it.
+    console.warn("Simulating message send. To enable sending, configure Twilio credentials in .env and uncomment the logic in send-follow-up.ts");
+    return { message: personalizedMessage, status: 'Generated (Not Sent)' };
   }
 );
