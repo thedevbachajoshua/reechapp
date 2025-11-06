@@ -2,24 +2,21 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, MapPin, Users, HeartHandshake } from 'lucide-react';
+import { Calendar, MapPin, Users, HeartHandshake, Pencil } from 'lucide-react';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 import { UserProfile } from '@/lib/data';
 import { useCollection } from '@/firebase';
 import { collection, query, where, documentId, Firestore } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
+import { useUserContext } from '@/context/user-context';
+import type { OutreachEvent } from '@/app/dashboard/outreaches/[outreachId]/page';
 
-type OutreachEvent = {
-  id: string; // Changed from number to string to match Firestore IDs
-  title: string;
-  date: string;
-  location: string;
-  status: 'Planned' | 'Ongoing' | 'Completed';
-  newConverts: any[]; // Kept as any for now, since it's not the focus
-  participantIds: string[];
-  coordinatorId: string;
+type OutreachCardProps = {
+  event: OutreachEvent;
+  onEdit: (event: OutreachEvent) => void;
 };
+
 
 const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
   const firestore = useFirestore();
@@ -57,7 +54,8 @@ const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) 
 };
 
 
-export function OutreachCard({ event }: { event: OutreachEvent }) {
+export function OutreachCard({ event, onEdit }: OutreachCardProps) {
+  const { userProfile } = useUserContext();
   const statusVariantMap: { [key: string]: 'default' | 'secondary' | 'destructive' } = {
     Planned: 'secondary',
     Ongoing: 'default',
@@ -68,8 +66,16 @@ export function OutreachCard({ event }: { event: OutreachEvent }) {
     <Card className="flex flex-col transition-transform duration-200 ease-in-out hover:scale-105 hover:shadow-xl">
       <CardHeader>
         <div className="flex items-start justify-between">
-            <CardTitle className="text-xl">{event.title}</CardTitle>
-            <Badge variant={statusVariantMap[event.status]} className={event.status === 'Ongoing' ? 'bg-primary text-primary-foreground' : ''}>{event.status}</Badge>
+            <CardTitle className="text-xl pr-2">{event.title}</CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant={statusVariantMap[event.status]} className={event.status === 'Ongoing' ? 'bg-primary text-primary-foreground' : ''}>{event.status}</Badge>
+              {userProfile?.role === 'Supervisor' && (
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(event)}>
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                      <span className="sr-only">Edit Outreach</span>
+                  </Button>
+              )}
+            </div>
         </div>
         <CardDescription className="flex items-center gap-4 text-sm pt-2">
             <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}</span>

@@ -14,10 +14,24 @@ import {
 import { OutreachList } from '@/components/outreach/outreach-list';
 import { CreateOutreachForm } from '@/components/outreach/create-outreach-form';
 import { useUserContext } from '@/context/user-context';
+import { OutreachEvent } from './[outreachId]/page';
 
 export default function OutreachesPage() {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [editingOutreach, setEditingOutreach] = React.useState<OutreachEvent | null>(null);
   const { userProfile } = useUserContext();
+  
+  const handleOpenEditDialog = (outreach: OutreachEvent) => {
+    setEditingOutreach(outreach);
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleCloseEditDialog = () => {
+    setIsEditDialogOpen(false);
+    setEditingOutreach(null);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -29,7 +43,7 @@ export default function OutreachesPage() {
           </p>
         </div>
         {userProfile?.role === 'Supervisor' && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -43,12 +57,29 @@ export default function OutreachesPage() {
                   Plan a new event to reach your community.
                 </DialogDescription>
               </DialogHeader>
-              <CreateOutreachForm onFinished={() => setIsDialogOpen(false)} />
+              <CreateOutreachForm onFinished={() => setIsCreateDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         )}
       </div>
-      <OutreachList />
+
+      <Dialog open={isEditDialogOpen} onOpenChange={handleCloseEditDialog}>
+          <OutreachList onEdit={handleOpenEditDialog} />
+          {editingOutreach && (
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Outreach</DialogTitle>
+                <DialogDescription>
+                  Update the details for this outreach event.
+                </DialogDescription>
+              </DialogHeader>
+              <CreateOutreachForm
+                onFinished={handleCloseEditDialog}
+                outreachToEdit={editingOutreach}
+              />
+            </DialogContent>
+          )}
+      </Dialog>
     </div>
   );
 }

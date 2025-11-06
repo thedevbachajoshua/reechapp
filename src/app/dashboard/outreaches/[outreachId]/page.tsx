@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserContext } from '@/context/user-context';
 import { CreateOutreachForm } from '@/components/outreach/create-outreach-form';
 
-type OutreachEvent = {
+export type OutreachEvent = {
   id: string;
   title: string;
   date: string;
@@ -173,7 +173,6 @@ export default function OutreachDetailPage() {
   const { outreachId } = params as { outreachId: string };
   const firestore = useFirestore();
   const [isAddConvertOpen, setIsAddConvertOpen] = React.useState(false);
-  const [isEditOutreachOpen, setIsEditOutreachOpen] = React.useState(false);
   const { userProfile } = useUserContext();
 
   const eventRef = useMemoFirebase(() => (firestore && outreachId ? doc(firestore, 'outreaches', outreachId) : null), [firestore, outreachId]);
@@ -231,28 +230,6 @@ export default function OutreachDetailPage() {
                 <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {event.location}</span>
               </p>
             </div>
-            {userProfile?.role === 'Supervisor' && (
-                <Dialog open={isEditOutreachOpen} onOpenChange={setIsEditOutreachOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit Outreach
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Edit Outreach</DialogTitle>
-                            <DialogDescription>
-                                Update the details for this outreach event.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <CreateOutreachForm 
-                            onFinished={() => setIsEditOutreachOpen(false)} 
-                            outreachToEdit={event}
-                        />
-                    </DialogContent>
-                </Dialog>
-            )}
         </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

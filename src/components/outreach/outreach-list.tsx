@@ -6,8 +6,13 @@ import { collection, query, where } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { useUserContext } from '@/context/user-context';
 import { useMemoFirebase } from '@/firebase/provider';
+import type { OutreachEvent } from '@/app/dashboard/outreaches/[outreachId]/page';
 
-export function OutreachList() {
+type OutreachListProps = {
+  onEdit: (event: OutreachEvent) => void;
+};
+
+export function OutreachList({ onEdit }: OutreachListProps) {
     const { userProfile } = useUserContext();
     const firestore = useFirestore();
 
@@ -23,7 +28,7 @@ export function OutreachList() {
         return baseQuery;
     }, [firestore, userProfile]);
 
-    const { data: outreachEvents, isLoading } = useCollection(outreachesQuery);
+    const { data: outreachEvents, isLoading } = useCollection<OutreachEvent>(outreachesQuery);
 
   if (isLoading) {
     return <div className="text-center">Loading outreaches...</div>;
@@ -32,7 +37,7 @@ export function OutreachList() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {(outreachEvents ?? []).map((event) => (
-        <OutreachCard key={event.id} event={event as any} />
+        <OutreachCard key={event.id} event={event} onEdit={onEdit} />
       ))}
     </div>
   );
