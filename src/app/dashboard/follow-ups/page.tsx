@@ -86,17 +86,15 @@ export default function FollowUpsPage() {
     }
 
     try {
+      // For the MVP, we call the AI, but it won't actually send an SMS.
+      // It just generates the message and returns a "Sent" status.
       const result = await sendFollowUpMessage({
         contactName: contact.name,
-        contactPhoneNumber: contact.phone,
         contactDetails: `Follow-up for: ${followUp.message}`,
         outreachTitle: 'a scheduled follow-up',
       });
 
-      if (result.status.startsWith('Failed')) {
-        throw new Error(result.status);
-      }
-      
+      // Since the flow now simulates success, we can directly update Firestore.
       const followUpRef = doc(firestore, 'scheduled_follow_ups', followUp.id);
       const updateData = { status: 'Sent' };
       
@@ -111,8 +109,8 @@ export default function FollowUpsPage() {
       });
 
       toast({
-        title: 'Message Sent!',
-        description: 'The follow-up has been successfully sent.',
+        title: 'Message "Sent"!',
+        description: 'The follow-up has been marked as sent in the system.',
       });
 
     } catch (error) {

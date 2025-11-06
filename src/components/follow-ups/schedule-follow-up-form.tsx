@@ -95,11 +95,8 @@ export function ScheduleFollowUpForm({
     }
     setIsAiLoading(true);
     try {
-      // The 'outreachTitle' and 'contactDetails' are generic for now.
-      // In a more advanced version, we could pull this from the contact's record.
       const result = await sendFollowUpMessage({
         contactName: contact.name,
-        contactPhoneNumber: contact.phone, 
         contactDetails: 'A new believer met at a recent event.',
         outreachTitle: 'a REECH outreach event',
       });
