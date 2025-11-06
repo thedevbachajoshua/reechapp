@@ -51,14 +51,13 @@ service cloud.firestore {
       // Any authenticated user can read any profile (useful for showing names/avatars).
       allow read: if isSignedIn();
       // A user can create, update, or delete their OWN profile document.
-      // This is safe because they can't change their own role once it's set on the client-side logic.
       // A more robust implementation would prevent role changes here.
       allow write: if isOwner(userId);
     }
     
     match /contacts/{contactId} {
       // A user can only access contacts they own.
-      allow read, write: if isSignedIn() && isOwner(resource.data.ownerId);
+      allow read, update, delete, write: if isSignedIn() && isOwner(resource.data.ownerId);
       allow create: if isSignedIn() && isOwner(request.resource.data.ownerId);
       // Allow a user to list the contacts that they own.
       allow list: if isSignedIn() && request.query.where.ownerId == request.auth.uid;

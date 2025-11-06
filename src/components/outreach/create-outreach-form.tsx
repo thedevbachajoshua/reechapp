@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,13 +16,13 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '../ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
+import { CalendarIcon, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { addDoc, collection, query, where } from 'firebase/firestore';
+import { addDoc, collection, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { UserProfile } from '@/lib/data';
@@ -29,6 +30,15 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Badge } from '../ui/badge';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+
+type OutreachEvent = {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  participantIds: string[];
+};
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -40,12 +50,14 @@ const formSchema = z.object({
 
 type CreateOutreachFormProps = {
   onFinished: () => void;
+  outreachToEdit?: OutreachEvent | null;
 };
 
-export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
+export function CreateOutreachForm({ onFinished, outreachToEdit }: CreateOutreachFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, userProfile } = useUserContext();
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const reachersQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'Reacher')) : null),
@@ -55,48 +67,77 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      location: '',
-      participantIds: userProfile?.role === 'Supervisor' ? [user!.uid] : [],
-    },
+    defaultValues: outreachToEdit 
+      ? { ...outreachToEdit, date: new Date(outreachToEdit.date) }
+      : {
+          title: '',
+          description: '',
+          location: '',
+          participantIds: userProfile?.role === 'Supervisor' ? [user!.uid] : [],
+        },
   });
+
+  useEffect(() => {
+    if (outreachToEdit) {
+      form.reset({
+        ...outreachToEdit,
+        date: new Date(outreachToEdit.date),
+      });
+    }
+  }, [outreachToEdit, form]);
   
   const selectedParticipantIds = form.watch('participantIds') || [];
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore || !user) return;
+    setIsSaving(true);
     
-    // Ensure the coordinator is always a participant
-    const finalParticipantIds = [...new Set([...values.participantIds, user.uid])];
-
-    const newOutreach = {
-        ...values,
-        date: values.date.toISOString(),
-        coordinatorId: user.uid,
-        participantIds: finalParticipantIds,
-        status: 'Planned',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        newConverts: [],
-    };
-
-    const outreachesCollection = collection(firestore, 'outreaches');
-    addDoc(outreachesCollection, newOutreach)
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: outreachesCollection.path,
-          operation: 'create',
-          requestResourceData: newOutreach,
+    if (outreachToEdit) {
+        // Update existing outreach
+        const outreachRef = doc(firestore, 'outreaches', outreachToEdit.id);
+        const updateData = {
+            ...values,
+            date: values.date.toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+        await updateDoc(outreachRef, updateData).catch(err => {
+            const permissionError = new FirestorePermissionError({
+                path: outreachRef.path,
+                operation: 'update',
+                requestResourceData: updateData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-    
-    toast({
-      title: "Outreach Created!",
-      description: `${values.title} has been scheduled.`,
-    });
+        toast({ title: "Outreach Updated!", description: `${values.title} has been updated.` });
+
+    } else {
+        // Create new outreach
+        const finalParticipantIds = [...new Set([...values.participantIds, user.uid])];
+        const newOutreach = {
+            ...values,
+            date: values.date.toISOString(),
+            coordinatorId: user.uid,
+            participantIds: finalParticipantIds,
+            status: 'Planned',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+
+        const outreachesCollection = collection(firestore, 'outreaches');
+        await addDoc(outreachesCollection, newOutreach)
+        .catch(async (serverError) => {
+            const permissionError = new FirestorePermissionError({
+            path: outreachesCollection.path,
+            operation: 'create',
+            requestResourceData: newOutreach,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+        
+        toast({ title: "Outreach Created!", description: `${values.title} has been scheduled.` });
+    }
+
+    setIsSaving(false);
     onFinished();
   }
 
@@ -178,7 +219,7 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                                date < new Date() || date < new Date('1900-01-01')
+                                date < new Date(new Date().setDate(new Date().getDate() - 1))
                             }
                             initialFocus
                         />
@@ -203,7 +244,7 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
                       variant="outline"
                       role="combobox"
                       className={cn(
-                        "w-full justify-between",
+                        "w-full justify-between h-auto min-h-10",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -211,7 +252,7 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
                         {reachers
                           ?.filter(r => selectedParticipantIds.includes(r.uid))
                           .map(r => <Badge variant="secondary" key={r.uid}>{r.name}</Badge>)
-                        ?? 'Select Reachers'}
+                        }
                         {selectedParticipantIds.length === 0 && 'Select Reachers...'}
                       </div>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -256,7 +297,10 @@ export function CreateOutreachForm({ onFinished }: CreateOutreachFormProps) {
         />
         
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Outreach</Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {outreachToEdit ? 'Save Changes' : 'Create Outreach'}
+          </Button>
         </div>
       </form>
     </Form>

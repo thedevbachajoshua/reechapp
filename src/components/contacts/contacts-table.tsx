@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Trash2 } from 'lucide-react';
+import { ChevronDown, Trash2, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { Dispatch, SetStateAction } from 'react';
@@ -38,9 +38,10 @@ const statusConfig: Record<Status, { variant: 'default' | 'secondary' | 'outline
 type ContactsTableProps = {
   contacts: Contact[];
   setContacts: Dispatch<SetStateAction<Contact[] | null>>;
+  onEdit: (contact: Contact) => void;
 }
 
-export function ContactsTable({ contacts, setContacts }: ContactsTableProps) {
+export function ContactsTable({ contacts, setContacts, onEdit }: ContactsTableProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -149,7 +150,11 @@ export function ContactsTable({ contacts, setContacts }: ContactsTableProps) {
               <TableCell className="hidden sm:table-cell text-muted-foreground">
                 {new Date(contact.dateAdded).toLocaleDateString()}
               </TableCell>
-               <TableCell className="text-right">
+               <TableCell className="text-right space-x-1">
+                 <Button variant="ghost" size="icon" onClick={() => onEdit(contact)}>
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                    <span className="sr-only">Edit</span>
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(contact.id)}>
                     <Trash2 className="h-4 w-4 text-destructive/70" />
                     <span className="sr-only">Delete</span>

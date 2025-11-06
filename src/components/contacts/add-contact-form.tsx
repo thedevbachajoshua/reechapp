@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +15,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { Contact } from '@/app/dashboard/contacts/page';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -24,29 +27,43 @@ const formSchema = z.object({
 export type NewContact = z.infer<typeof formSchema>;
 
 type AddContactFormProps = {
-  onContactAdd: (contact: NewContact) => void;
+  onSave: (data: NewContact, contactId?: string) => void;
   onFinished: () => void;
+  initialData?: Contact | null;
 };
 
-export function AddContactForm({ onContactAdd, onFinished }: AddContactFormProps) {
+export function AddContactForm({ onSave, onFinished, initialData }: AddContactFormProps) {
   const { toast } = useToast();
+  const [isSaving, setIsSaving] = React.useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData || {
       name: '',
       email: '',
       phone: '',
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    onContactAdd(values);
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    } else {
+      form.reset({ name: '', email: '', phone: '' });
+    }
+  }, [initialData, form]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSaving(true);
+    await onSave(values, initialData?.id);
+    setIsSaving(false);
+    
     toast({
-      title: "Contact Added",
-      description: `${values.name} has been added to your contacts.`,
+      title: initialData ? "Contact Updated" : "Contact Added",
+      description: `${values.name} has been saved.`,
     });
+    
     onFinished();
-    form.reset();
   }
 
   return (
@@ -92,7 +109,10 @@ export function AddContactForm({ onContactAdd, onFinished }: AddContactFormProps
           )}
         />
         <div className="flex justify-end pt-2">
-            <Button type="submit">Add Contact</Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {initialData ? 'Save Changes' : 'Add Contact'}
+            </Button>
         </div>
       </form>
     </Form>

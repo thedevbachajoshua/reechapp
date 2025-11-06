@@ -2,15 +2,15 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams } from 'next/navigation';
-import { Calendar, HeartHandshake, MapPin, Users, Check, Clock, PlusCircle, Loader2 } from 'lucide-react';
+import { Calendar, HeartHandshake, MapPin, Users, Check, Clock, PlusCircle, Loader2, Pencil } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Header from '@/components/layout/header';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, where, documentId, addDoc } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { doc, collection, query, where, documentId, addDoc, updateDoc } from 'firebase/firestore';
 import { useDoc, useCollection } from '@/firebase';
 import type { UserProfile } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,12 +24,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useUserContext } from '@/context/user-context';
+import { CreateOutreachForm } from '@/components/outreach/create-outreach-form';
 
 type OutreachEvent = {
   id: string;
   title: string;
   date: string;
   location: string;
+  description: string;
   status: 'Planned' | 'Ongoing' | 'Completed';
   participantIds: string[];
   coordinatorId: string;
@@ -101,26 +103,34 @@ const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onF
         if (!firestore || !user) return;
         setIsSubmitting(true);
 
-        try {
-            const convertsCollection = collection(firestore, 'outreaches', outreachId, 'new_converts');
-            await addDoc(convertsCollection, {
-                ...values,
-                outreachId,
-                status: 'Just Met',
-                assignedTo: user.uid, // Assign to the current user by default
-                createdAt: new Date().toISOString()
+        const newConvertData = {
+            ...values,
+            outreachId,
+            status: 'Just Met',
+            assignedTo: user.uid, // Assign to the current user by default
+            createdAt: new Date().toISOString()
+        };
+
+        const convertsCollection = collection(firestore, 'outreaches', outreachId, 'new_converts');
+        
+        addDoc(convertsCollection, newConvertData)
+            .then(() => {
+                 toast({ title: "New Convert Added", description: `${values.name} has been recorded.` });
+                 onFinished();
+                 form.reset();
+            })
+            .catch(async (error) => {
+                const permissionError = new FirestorePermissionError({
+                    path: convertsCollection.path,
+                    operation: 'create',
+                    requestResourceData: newConvertData
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: 'destructive', title: "Error", description: "Could not add new convert." });
+            })
+            .finally(() => {
+                setIsSubmitting(false);
             });
-
-            toast({ title: "New Convert Added", description: `${values.name} has been recorded.` });
-            onFinished();
-            form.reset();
-
-        } catch (error) {
-            console.error("Error adding new convert: ", error);
-            toast({ variant: 'destructive', title: "Error", description: "Could not add new convert." });
-        } finally {
-            setIsSubmitting(false);
-        }
     }
 
     return (
@@ -156,14 +166,15 @@ const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onF
             </form>
          </Form>
     )
-
 }
 
 export default function OutreachDetailPage() {
   const params = useParams();
   const { outreachId } = params as { outreachId: string };
   const firestore = useFirestore();
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isAddConvertOpen, setIsAddConvertOpen] = React.useState(false);
+  const [isEditOutreachOpen, setIsEditOutreachOpen] = React.useState(false);
+  const { userProfile } = useUserContext();
 
   const eventRef = useMemoFirebase(() => (firestore && outreachId ? doc(firestore, 'outreaches', outreachId) : null), [firestore, outreachId]);
   const { data: event, isLoading: isLoadingEvent } = useDoc<OutreachEvent>(eventRef);
@@ -212,12 +223,36 @@ export default function OutreachDetailPage() {
     <>
     <Header pageTitle={event.title} />
     <div className="space-y-6">
-       <div>
-          <h1 className="text-3xl font-bold font-headline">{event.title}</h1>
-          <p className="text-muted-foreground flex items-center gap-4">
-            <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}</span>
-            <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {event.location}</span>
-          </p>
+       <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold font-headline">{event.title}</h1>
+              <p className="text-muted-foreground flex items-center gap-4">
+                <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(event.date).toLocaleDateString()}</span>
+                <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" /> {event.location}</span>
+              </p>
+            </div>
+            {userProfile?.role === 'Supervisor' && (
+                <Dialog open={isEditOutreachOpen} onOpenChange={setIsEditOutreachOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Outreach
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Edit Outreach</DialogTitle>
+                            <DialogDescription>
+                                Update the details for this outreach event.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <CreateOutreachForm 
+                            onFinished={() => setIsEditOutreachOpen(false)} 
+                            outreachToEdit={event}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -261,7 +296,7 @@ export default function OutreachDetailPage() {
               Individuals who have accepted Christ during this event.
             </CardDescription>
           </div>
-           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+           <Dialog open={isAddConvertOpen} onOpenChange={setIsAddConvertOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -277,7 +312,7 @@ export default function OutreachDetailPage() {
                 </DialogHeader>
                 <AddNewConvertForm 
                     outreachId={outreachId} 
-                    onFinished={() => setIsDialogOpen(false)}
+                    onFinished={() => setIsAddConvertOpen(false)}
                 />
               </DialogContent>
             </Dialog>
