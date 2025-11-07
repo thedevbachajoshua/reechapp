@@ -22,7 +22,7 @@ const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) 
 
     React.useEffect(() => {
         // Simulate fetching participants
-        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(String(u.id)));
+        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(String(u.uid)));
         setParticipants(fetchedParticipants);
         setIsLoading(false);
     }, [participantIds]);
@@ -38,7 +38,7 @@ const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) 
   return (
     <div className="flex items-center justify-center -space-x-2">
       {participants.slice(0, 5).map((p) => (
-        <Avatar key={p.id} className="h-8 w-8 border-2 border-background">
+        <Avatar key={p.uid} className="h-8 w-8 border-2 border-background">
           <AvatarImage src={p.avatar} data-ai-hint="person face" />
           <AvatarFallback>{p.name?.charAt(0)}</AvatarFallback>
         </Avatar>
@@ -60,6 +60,9 @@ export function OutreachCard({ event, onEdit }: OutreachCardProps) {
     Ongoing: 'default',
     Completed: 'destructive',
   };
+
+  const reacherCount = event.participantIds.filter(id => id !== event.coordinatorId).length;
+
 
   return (
     <Card className="flex flex-col transition-transform duration-200 ease-in-out hover:scale-105 hover:shadow-xl">
@@ -84,7 +87,7 @@ export function OutreachCard({ event, onEdit }: OutreachCardProps) {
       <CardContent className="flex-grow space-y-4">
         <div className="flex items-center justify-around text-center">
             <div>
-                <p className="font-bold text-2xl">{event.participantIds.length}</p>
+                <p className="font-bold text-2xl">{reacherCount}</p>
                 <p className="text-sm text-muted-foreground flex items-center gap-1"><Users className="h-4 w-4" /> Reachers</p>
             </div>
             <div>
