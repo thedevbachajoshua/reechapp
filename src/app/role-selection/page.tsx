@@ -48,9 +48,9 @@ export default function RoleSelectionPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="mx-auto font-headline text-6xl font-bold mb-2">REECH</div>
+          <div className="mx-auto font-headline text-6xl font-bold mb-2">REACH</div>
           <CardTitle>Choose Your Role</CardTitle>
-          <CardDescription>Select how you will be using the REECH platform for this demo.</CardDescription>
+          <CardDescription>Select how you will be using the REACH platform for this demo.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <button

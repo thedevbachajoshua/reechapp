@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { UserProvider } from '@/context/user-context';
 
 export const metadata: Metadata = {
-  title: 'REECH',
+  title: 'REACH',
   description: 'A platform to nurture new believers.',
 };
 

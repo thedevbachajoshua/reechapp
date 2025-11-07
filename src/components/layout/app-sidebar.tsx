@@ -61,14 +61,14 @@ export default function AppSidebar() {
         <div className="flex items-center gap-2">
             <Image 
                 src="/logo.png" 
-                alt="REECH Logo" 
+                alt="REACH Logo" 
                 width={48} 
                 height={48}
                 style={{
                     filter: 'brightness(0) saturate(100%) invert(80%) sepia(52%) saturate(4788%) hue-rotate(3deg) brightness(106%) contrast(101%)'
                 }}
             />
-          <span className="font-bold text-2xl font-headline">REECH</span>
+          <span className="font-bold text-2xl font-headline">REACH</span>
         </div>
       </SidebarHeader>
 

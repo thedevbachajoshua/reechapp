@@ -226,8 +226,8 @@ export default function SettingsPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
-                    <h3 className="font-bold mt-2">Welcome to the REECH Help Center!</h3>
-                    <p>Get quick answers and learn how to make the most of REECH.</p>
+                    <h3 className="font-bold mt-2">Welcome to the REACH Help Center!</h3>
+                    <p>Get quick answers and learn how to make the most of REACH.</p>
                     <h4 className="font-bold mt-4">📖 Getting Started</h4>
                     <ul>
                       <li>Sign up as a Supervisor or Reacher and set up your profile.</li>
@@ -265,12 +265,12 @@ export default function SettingsPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
-                    <p>By using REECH, you agree to uphold integrity and respect in all interactions.</p>
+                    <p>By using REACH, you agree to uphold integrity and respect in all interactions.</p>
                     <ol className="list-decimal list-inside space-y-2">
-                      <li><b>Purpose of REECH:</b> REECH is designed to support church and outreach teams in managing evangelism and follow-up.</li>
-                      <li><b>Responsible Use:</b> Users must not use REECH for spam, harassment, or unrelated activities. Supervisors must ensure all outreach data is used ethically and lawfully.</li>
+                      <li><b>Purpose of REACH:</b> REACH is designed to support church and outreach teams in managing evangelism and follow-up.</li>
+                      <li><b>Responsible Use:</b> Users must not use REACH for spam, harassment, or unrelated activities. Supervisors must ensure all outreach data is used ethically and lawfully.</li>
                       <li><b>Data and Content:</b> You are responsible for the accuracy of any information you upload. Do not share sensitive personal data without consent.</li>
-                      <li><b>Modifications:</b> We may update REECH or these Terms at any time. Continued use means you accept any updates.</li>
+                      <li><b>Modifications:</b> We may update REACH or these Terms at any time. Continued use means you accept any updates.</li>
                       <li><b>Account Termination:</b> We reserve the right to suspend or terminate accounts that misuse the app or violate these terms.</li>
                     </ol>
                   </AccordionContent>
@@ -286,23 +286,23 @@ export default function SettingsPage() {
                     <ol className="list-decimal list-inside space-y-2">
                       <li><b>Information We Collect:</b> We collect basic details like your name, phone number, and outreach activity to improve your experience.</li>
                       <li><b>How We Use It:</b> Your data helps organize outreaches, manage contacts, and automate follow-ups. Only authorized team members (supervisors and assigned reachers) can access relevant outreach data.</li>
-                      <li><b>Data Security:</b> We use secure storage and encryption to protect your information. REECH never sells or shares your data with third parties.</li>
+                      <li><b>Data Security:</b> We use secure storage and encryption to protect your information. REACH never sells or shares your data with third parties.</li>
                       <li><b>Your Rights:</b> You can request your data to be deleted or exported anytime by contacting privacy@reachapp.org.</li>
-                      <li><b>Children’s Privacy:</b> REECH is intended for users above 13 years old and for church or outreach use only.</li>
+                      <li><b>Children’s Privacy:</b> REACH is intended for users above 13 years old and for church or outreach use only.</li>
                     </ol>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="about-reach">
                   <AccordionTrigger>
                      <div className="flex items-center gap-2">
-                        <Info /> About REECH
+                        <Info /> About REACH
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
                     <h4 className="font-bold mt-2">Our Mission</h4>
                     <p>To help believers connect, follow up, and nurture new converts with love and consistency.</p>
                     <h4 className="font-bold mt-4">What We Do</h4>
-                    <p>REECH makes evangelism follow-up easy:</p>
+                    <p>REACH makes evangelism follow-up easy:</p>
                      <ul>
                         <li>Organize outreaches and track participation.</li>
                         <li>Collect and manage new convert contacts.</li>
@@ -323,11 +323,11 @@ export default function SettingsPage() {
                   </AccordionTrigger>
                   <AccordionContent className="prose prose-sm dark:prose-invert pl-8">
                     <h4 className="font-bold mt-2">Developer</h4>
-                    <p>REECH was designed and developed by Joshua Mba Bacha — a passionate young innovator and student who believes in using technology to advance God’s Kingdom across Africa and beyond.</p>
-                    <h4 className="font-bold mt-4">Vision Behind REECH</h4>
-                    <p>Joshua built REECH out of a deep desire to solve a real challenge in evangelism: the lack of consistent follow-up and discipleship after outreach. REECH combines faith and technology to help believers stay connected, nurture new converts, and strengthen their spiritual journey.</p>
+                    <p>REACH was designed and developed by Joshua Mba Bacha — a passionate young innovator and student who believes in using technology to advance God’s Kingdom across Africa and beyond.</p>
+                    <h4 className="font-bold mt-4">Vision Behind REACH</h4>
+                    <p>Joshua built REACH out of a deep desire to solve a real challenge in evangelism: the lack of consistent follow-up and discipleship after outreach. REACH combines faith and technology to help believers stay connected, nurture new converts, and strengthen their spiritual journey.</p>
                     <h4 className="font-bold mt-4">Development Philosophy</h4>
-                     <p>Every feature in REECH is inspired by real evangelism experiences — simple, purposeful, and Spirit-led. The goal is to make soul-winning organized, collaborative, and effective through seamless tools and automation.</p>
+                     <p>Every feature in REACH is inspired by real evangelism experiences — simple, purposeful, and Spirit-led. The goal is to make soul-winning organized, collaborative, and effective through seamless tools and automation.</p>
                     <h4 className="font-bold mt-4">Contact</h4>
                      <p>
                         📧 mbabachajoshua@gmail.com<br/>

@@ -1,12 +1,12 @@
-# REECH: Nurture - App Prototype
+# REACH: Nurture - App Prototype
 
 ## Problem Statement
 
 In many evangelism and outreach efforts, the initial connection with a new believer is powerful, but the follow-up process can be inconsistent and challenging to manage. Without a structured and timely system for nurturing these new connections, individuals can feel disconnected, and the initial spark of faith may fade. Outreach teams often lack simple, collaborative tools to track contacts, coordinate follow-ups, and ensure that every new convert receives the personal encouragement they need to grow.
 
-## About REECH
+## About REACH
 
-**REECH** is a prototype web application designed to empower church and outreach teams to bridge this gap. It provides a centralized platform to manage evangelism, track new believers, and automate the follow-up process, helping to nurture new converts with love and consistency.
+**REACH** is a prototype web application designed to empower church and outreach teams to bridge this gap. It provides a centralized platform to manage evangelism, track new believers, and automate the follow-up process, helping to nurture new converts with love and consistency.
 
 The application is designed with two primary roles in mind:
 

@@ -90,7 +90,7 @@ export default function FollowUpsPage() {
       const result = await sendFollowUpMessage({
         contactName: followUp.contactName,
         contactDetails: contact?.phone || 'No details', // Pass phone or some detail
-        outreachTitle: "a REECH outreach event" // Placeholder
+        outreachTitle: "a REACH outreach event" // Placeholder
       });
 
       if (result.status.startsWith('Failed')) {

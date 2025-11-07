@@ -73,14 +73,14 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
                  <div className="md:hidden flex items-center gap-2 font-bold font-headline text-2xl">
                     <Image 
                         src="/logo.png" 
-                        alt="REECH Logo" 
+                        alt="REACH Logo" 
                         width={40} 
                         height={40}
                         style={{
                             filter: 'brightness(0) saturate(100%) invert(80%) sepia(52%) saturate(4788%) hue-rotate(3deg) brightness(106%) contrast(101%)'
                         }}
                     />
-                    REECH
+                    REACH
                 </div>
                 <BreadcrumbGenerator pathname={pathname} pageTitle={pageTitle} />
             </div>
