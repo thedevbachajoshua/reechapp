@@ -51,7 +51,7 @@ export default function OutreachesPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Outreaches</h1>
           <p className="text-muted-foreground">
-            Manage and track your team's outreach events.
+            View and track outreach events.
           </p>
         </div>
         {userProfile?.role === 'Supervisor' && (

@@ -130,20 +130,20 @@ export const stats = [
     {
         id: 1,
         title: 'Community Cookout',
-        date: 'July 20, 2024',
+        date: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString(), // 2 weeks from now
         location: 'City Park',
         status: 'Planned' as 'Planned' | 'Ongoing' | 'Completed',
-        participantIds: ['supervisor-001', 'reacher-002', 'reacher-003'],
+        participantIds: ['supervisor-001', 'reacher-001', 'reacher-003'],
         coordinatorId: 'supervisor-001',
         newConverts: [],
     },
     {
         id: 2,
         title: 'Campus Outreach',
-        date: 'June 15, 2024',
+        date: new Date().toISOString(), // Today
         location: 'University Plaza',
         status: 'Ongoing' as 'Planned' | 'Ongoing' | 'Completed',
-        participantIds: ['supervisor-001', 'reacher-004', 'reacher-005', 'reacher-006'],
+        participantIds: ['supervisor-001', 'reacher-001', 'reacher-005', 'reacher-006'],
         coordinatorId: 'supervisor-001',
         newConverts: [
             { id: 'nc_1', name: 'Chris Evans', phone: '555-0101', status: 'Just Met', assignedTo: 'reacher-004', notes: 'Wants to learn more about small groups.'},
@@ -155,10 +155,10 @@ export const stats = [
     {
         id: 3,
         title: 'Homeless Shelter Visit',
-        date: 'May 30, 2024',
+        date: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString(), // 1 month ago
         location: 'Downtown Shelter',
         status: 'Completed' as 'Planned' | 'Ongoing' | 'Completed',
-        participantIds: ['supervisor-001', 'reacher-002'],
+        participantIds: ['supervisor-001', 'reacher-001'],
         coordinatorId: 'supervisor-001',
         newConverts: [
              { id: 'nc_5', name: 'Robert Hall', phone: '555-0109', status: 'Contacted', assignedTo: 'reacher-002', notes: 'Gave him a blanket and a meal.'},
