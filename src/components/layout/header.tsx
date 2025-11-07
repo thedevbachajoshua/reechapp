@@ -1,3 +1,4 @@
+
 'use client';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
@@ -23,25 +24,14 @@ const pathToTitle: { [key: string]: string } = {
 };
 
 const ReechLogo = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M14.5 18c.3-2.5 2-4.5 4.5-4.5" />
-      <path d="M11 11.5c.3-2.5 2-4.5 4.5-4.5" />
-      <path d="M7.5 7C8 4.5 10 2.5 12.5 2.5" />
-      <path d="M19 14.5c.3-2.5 2-4.5 4.5-4.5" />
-      <path d="M5 21a7 7 0 0 1-1-3.5c0-2 .5-3.5 1.5-5" />
-      <path d="M9 21a7 7 0 0 0-1-3.5c0-2 .5-3.5 1.5-5" />
-      <path d="M13 21a7 7 0 0 0-1-3.5c0-2 .5-3.5 1.5-5" />
-      <path d="M17 21a7 7 0 0 0-1-3.5c0-2 .5-3.5 1.5-5" />
+    <svg width="24" height="24" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <path d="M150 100 C 180 105, 180 95, 200 100" fill="none" stroke="currentColor" strokeWidth="10" />
+        <path d="M160 100 C 140 70, 60 70, 40 100 L 40 100 C 20 80, 50 40, 70 50 C 75 40, 90 40, 95 50 C 100 40, 115 40, 120 50 C 125 40, 140 40, 145 50 L 155 95 C 160 100, 160 100, 160 100 Z" fill="hsl(var(--background))" stroke="currentColor" strokeWidth="10" strokeLinejoin="round" strokeLinecap="round" />
+        <path d="M40 100 L 40 100 C 20 80, 50 40, 70 50" fill="none" stroke="currentColor" strokeWidth="10"/>
+        <path d="M70 50 C 75 40, 90 40, 95 50" fill="none" stroke="currentColor" strokeWidth="10"/>
+        <path d="M95 50 C 100 40, 115 40, 120 50" fill="none" stroke="currentColor" strokeWidth="10"/>
+        <path d="M120 50 C 125 40, 140 40, 145 50" fill="none" stroke="currentColor" strokeWidth="10"/>
+        <path d="M150 90 C 130 90, 80 85, 60 90" fill="none" stroke="currentColor" strokeWidth="8" opacity="0.4"/>
     </svg>
 );
 
