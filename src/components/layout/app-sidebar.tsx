@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -36,14 +37,25 @@ const allMenuItems = [
 ];
 
 const ReechLogo = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg width="24" height="24" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <path d="M150 100 C 180 105, 180 95, 200 100" fill="none" stroke="currentColor" strokeWidth="10" />
-        <path d="M160 100 C 140 70, 60 70, 40 100 L 40 100 C 20 80, 50 40, 70 50 C 75 40, 90 40, 95 50 C 100 40, 115 40, 120 50 C 125 40, 140 40, 145 50 L 155 95 C 160 100, 160 100, 160 100 Z" fill="hsl(var(--sidebar-background))" stroke="currentColor" strokeWidth="10" strokeLinejoin="round" strokeLinecap="round" />
-        <path d="M40 100 L 40 100 C 20 80, 50 40, 70 50" fill="none" stroke="currentColor" strokeWidth="10"/>
-        <path d="M70 50 C 75 40, 90 40, 95 50" fill="none" stroke="currentColor" strokeWidth="10"/>
-        <path d="M95 50 C 100 40, 115 40, 120 50" fill="none" stroke="currentColor" strokeWidth="10"/>
-        <path d="M120 50 C 125 40, 140 40, 145 50" fill="none" stroke="currentColor" strokeWidth="10"/>
-        <path d="M150 90 C 130 90, 80 85, 60 90" fill="none" stroke="currentColor" strokeWidth="8" opacity="0.4"/>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M12 6.4C10.7 4.5 8.2 4 6.5 5.3C4.8 6.6 4.8 9.3 6.5 11.2L12 17.4L17.5 11.2C19.2 9.3 19.2 6.6 17.5 5.3C15.8 4 13.3 4.5 12 6.4Z"
+        fill="currentColor"
+      />
+      <path
+        d="M18.8 15C18.2 15 17.6 15.3 17.1 15.8C16.6 16.3 16.1 16.9 15.4 17.2C14.7 17.5 13.9 17.6 13.1 17.6C11.6 17.6 10.3 17.1 9.2 16.2C8.1 15.3 7.2 14 6.8 12.6C6.4 11.2 6.5 9.7 7.2 8.4C7.9 7.1 9 6.2 10.3 5.8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
 );
 
@@ -71,7 +83,7 @@ export default function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground p-1">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground p-1.5">
             <ReechLogo className="h-6 w-6" />
           </div>
           <span className="font-bold text-2xl font-headline">REECH</span>
