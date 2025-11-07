@@ -64,8 +64,8 @@ export default function FollowUpsPage() {
   const followUpsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
-      collection(firestore, 'scheduled_follow_ups'), 
-      where('creatorId', '==', user.uid), 
+      collection(firestore, 'scheduled_follow_ups'),
+      where('creatorId', '==', user.uid),
       orderBy('scheduledFor', 'desc')
     );
   }, [firestore, user]);

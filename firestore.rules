@@ -96,17 +96,20 @@ service cloud.firestore {
     }
 
     match /scheduled_follow_ups/{followUpId} {
-        // Any authenticated user can see all scheduled messages for UI purposes.
-        allow list, read: if isSignedIn();
+        // A user can list only their OWN scheduled messages.
+        allow list: if isSignedIn() && request.query.where.creatorId == request.auth.uid;
+        
+        // The creator can read their own message.
+        allow read: if isOwner(resource.data.creatorId);
         
         // Any authenticated user can create a scheduled message for a contact.
         // The `creatorId` field ensures we know who made it.
-        allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+        allow create: if isSignedIn() && isOwner(request.resource.data.creatorId);
 
         // The creator can delete their own scheduled message.
         allow delete: if isOwner(resource.data.creatorId);
         
-        // The creator can update the status of their own scheduled message (for "Send Now").
+        // The creator can update the status of their own scheduled message (for "Send Now" or editing).
         allow update: if isOwner(resource.data.creatorId);
     }
   }
