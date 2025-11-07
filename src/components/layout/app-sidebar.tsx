@@ -24,12 +24,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUserContext } from '@/context/user-context';
-import HeartHandshake from '../icons/HeartHandshake';
+import Image from 'next/image';
 
 
 const allMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Supervisor', 'Reacher'] },
-  { href: '/dashboard/outreaches', label: 'Outreaches', icon: HeartHandshake, roles: ['Supervisor', 'Reacher'] },
+  { href: '/dashboard/outreaches', label: 'Outreaches', icon: 'logo', roles: ['Supervisor', 'Reacher'] },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users, roles: ['Supervisor', 'Reacher'] },
   { href: '/dashboard/follow-ups', label: 'Follow-ups', icon: MessageSquare, roles: ['Supervisor', 'Reacher'] },
   { href: '/dashboard/feed', label: 'Discipleship Feed', icon: BookOpen, roles: ['Supervisor', 'Reacher'] },
@@ -59,7 +59,15 @@ export default function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <HeartHandshake className="w-12 h-12" />
+            <Image 
+                src="/logo.png" 
+                alt="REECH Logo" 
+                width={48} 
+                height={48}
+                style={{
+                    filter: 'brightness(0) saturate(100%) invert(80%) sepia(52%) saturate(4788%) hue-rotate(3deg) brightness(106%) contrast(101%)'
+                }}
+            />
           <span className="font-bold text-2xl font-headline">REECH</span>
         </div>
       </SidebarHeader>
@@ -75,7 +83,19 @@ export default function AppSidebar() {
                 onClick={handleLinkClick}
               >
                 <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
+                  {item.icon === 'logo' ? (
+                     <Image 
+                        src="/logo.png" 
+                        alt="Outreaches" 
+                        width={20} 
+                        height={20}
+                        style={{
+                            filter: 'brightness(0) saturate(100%) invert(100%)'
+                        }}
+                    />
+                  ) : (
+                    <item.icon className="h-5 w-5" />
+                  )}
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>

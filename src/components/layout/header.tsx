@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import React from 'react';
 import Link from 'next/link';
-import HeartHandshake from '../icons/HeartHandshake';
+import Image from 'next/image';
 
 const pathToTitle: { [key: string]: string } = {
     '/dashboard': 'Dashboard',
@@ -27,11 +27,11 @@ const pathToTitle: { [key: string]: string } = {
 
 function BreadcrumbGenerator({ pathname, pageTitle }: { pathname: string, pageTitle?: string }) {
     const segments = pathname.split('/').filter(Boolean);
-    const isOutreachDetailPage = pathname.includes('/dashboard/outreaches/') && segments.length > 2;
+    const isDetailPage = pathname.includes('/dashboard/outreaches/') && segments.length > 2;
 
     let title: string | undefined;
 
-    if (isOutreachDetailPage) {
+    if (isDetailPage) {
         title = pageTitle;
     } else {
         title = pathToTitle[pathname];
@@ -40,13 +40,13 @@ function BreadcrumbGenerator({ pathname, pageTitle }: { pathname: string, pageTi
     return (
         <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
-                <BreadcrumbItem>
+                 <BreadcrumbItem>
                     {isOutreachDetailPage ? (
                         <BreadcrumbLink asChild>
                             <Link href="/dashboard/outreaches">Outreaches</Link>
                         </BreadcrumbLink>
                     ) : (
-                        <BreadcrumbPage>{title}</BreadcrumbPage>
+                        <BreadcrumbPage>{title || 'Page'}</BreadcrumbPage>
                     )}
                 </BreadcrumbItem>
                 
@@ -72,7 +72,7 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
              <div className="flex items-center gap-2">
                 <SidebarTrigger className="md:hidden" />
                  <div className="md:hidden flex items-center gap-2 font-bold font-headline text-2xl">
-                    <HeartHandshake className="w-12 h-12" />
+                    <Image src="/logo.png" alt="REECH Logo" width={40} height={40} />
                     REECH
                 </div>
                 <BreadcrumbGenerator pathname={pathname} pageTitle={pageTitle} />
