@@ -44,8 +44,8 @@ export function EncouragementGenerator() {
           conversationHistory: values.conversationHistory || 'No recent conversation.',
         });
         setResult(encouragement);
-      } catch (e) {
-        setError('Failed to generate encouragement. Please try again.');
+      } catch (e: any) {
+        setError(e.message || 'Failed to generate encouragement. Please try again.');
         console.error(e);
       }
     });
@@ -150,7 +150,7 @@ export function EncouragementGenerator() {
                   <BookOpen className="h-5 w-5 text-primary" />
                   Suggested Scripture
                 </h3>
-                <p className="font-medium text-accent-foreground">
+                <p className="font-medium text-foreground">
                   {result.scriptureReference}
                 </p>
               </div>
