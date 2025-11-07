@@ -51,7 +51,7 @@ const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) 
 
     React.useEffect(() => {
         // Simulate fetching participants
-        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(String(u.id)));
+        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(u.uid));
         setParticipants(fetchedParticipants);
         setIsLoading(false);
     }, [participantIds]);
@@ -78,12 +78,14 @@ const AssignedReacher = ({ reacherId }: { reacherId: string }) => {
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        const foundReacher = leaderboard.find(u => String(u.id) === reacherId);
+        const foundReacher = leaderboard.find(u => u.uid === reacherId);
         setReacher(foundReacher || null);
         setIsLoading(false);
     }, [reacherId]);
 
     if (isLoading) return <Skeleton className="h-5 w-24" />;
+    if (!reacher) return <span className="text-sm text-muted-foreground">Unassigned</span>;
+
     return <span className="text-sm">{reacher?.name}</span>;
 }
 
