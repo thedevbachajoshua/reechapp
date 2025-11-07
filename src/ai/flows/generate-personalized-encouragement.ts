@@ -61,7 +61,13 @@ const generatePersonalizedEncouragementFlow = ai.defineFlow(
       const {output} = await prompt(input);
       return output!;
     } catch (e: any) {
-      if (e.message.includes('503')) {
+      const errorMessage = e.message || '';
+      // Check for common API key-related error messages
+      if (errorMessage.includes('API key') || errorMessage.includes('400')) {
+        throw new Error('AI feature is not configured. Please add the GEMINI_API_KEY to your Vercel project Environment Variables.');
+      }
+
+      if (errorMessage.includes('503')) {
         // Fallback to a different model if the primary one is overloaded
         const llmResponse = await generate({
             model: 'googleai/gemini-1.5-flash-latest',
