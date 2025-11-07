@@ -19,17 +19,17 @@ import {
   Sparkles,
   LogOut,
   Settings,
-  Flame,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUserContext } from '@/context/user-context';
-import Image from 'next/image';
+import HeartHandshake from '../icons/HeartHandshake';
+
 
 const allMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Supervisor', 'Reacher'] },
-  { href: '/dashboard/outreaches', label: 'Outreaches', icon: Flame, roles: ['Supervisor', 'Reacher'] },
+  { href: '/dashboard/outreaches', label: 'Outreaches', icon: HeartHandshake, roles: ['Supervisor', 'Reacher'] },
   { href: '/dashboard/contacts', label: 'Contacts', icon: Users, roles: ['Supervisor', 'Reacher'] },
   { href: '/dashboard/follow-ups', label: 'Follow-ups', icon: MessageSquare, roles: ['Supervisor', 'Reacher'] },
   { href: '/dashboard/feed', label: 'Discipleship Feed', icon: BookOpen, roles: ['Supervisor', 'Reacher'] },
@@ -59,10 +59,7 @@ export default function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg p-1.5">
-            {/* The logo is now an Image component pointing to /logo.png */}
-            <Image src="/logo.png" alt="REECH Logo" width={24} height={24} />
-          </div>
+          <HeartHandshake className="w-12 h-12" />
           <span className="font-bold text-2xl font-headline">REECH</span>
         </div>
       </SidebarHeader>
@@ -78,7 +75,7 @@ export default function AppSidebar() {
                 onClick={handleLinkClick}
               >
                 <Link href={item.href}>
-                  <item.icon />
+                  <item.icon className="h-5 w-5" />
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
