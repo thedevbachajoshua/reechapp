@@ -1,69 +1,25 @@
 # REECH: Nurture - App Prototype
 
-This is a Next.js application built with Firebase Studio. It serves as a prototype for **REECH**, a platform designed to help church and outreach teams manage evangelism, follow-up, and nurture new believers with love and consistency.
+## Problem Statement
 
-## Tech Stack
+In many evangelism and outreach efforts, the initial connection with a new believer is powerful, but the follow-up process can be inconsistent and challenging to manage. Without a structured and timely system for nurturing these new connections, individuals can feel disconnected, and the initial spark of faith may fade. Outreach teams often lack simple, collaborative tools to track contacts, coordinate follow-ups, and ensure that every new convert receives the personal encouragement they need to grow.
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **AI Integration**: [Firebase Genkit](https://firebase.google.com/docs/genkit)
-- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Deployment**: [Vercel](https://vercel.com/)
+## About REECH
 
-## Key Features
+**REECH** is a prototype web application designed to empower church and outreach teams to bridge this gap. It provides a centralized platform to manage evangelism, track new believers, and automate the follow-up process, helping to nurture new converts with love and consistency.
 
-- **Role-Based Access**: Separate views and permissions for 'Supervisors' and 'Reachers'.
-- **Outreach Management**: Plan, create, and manage outreach events.
-- **Contact & Convert Tracking**: Add and manage contacts and new converts from outreach events.
-- **AI-Powered Assistance**:
-    - Generate personalized follow-up messages.
-    - Create encouraging messages with relevant scriptures.
-- **Discipleship Feed**: A space for team members to share devotional posts.
-- **Automated Follow-ups**: Schedule messages to be sent to contacts at a future date.
+The application is designed with two primary roles in mind:
 
-## Getting Started
+*   **Supervisors:** Can create and manage outreach events, assign team members, and get a high-level overview of all activities and progress.
+*   **Reachers:** Team members on the ground who can add new contacts, record interactions, and use AI-powered tools to assist in writing personalized, encouraging messages.
 
-To run this project locally, you will need to have Node.js and npm (or yarn/pnpm) installed on your machine.
+The goal is to ensure no one falls through the cracks and every new believer is intentionally discipled.
 
-### 1. Set Up Environment Variables
+## Technology Stack
 
-The application's AI features rely on the Gemini API. You will need to get an API key and make it available to the application.
+This application is built with a modern, efficient, and scalable tech stack:
 
-1.  **Get a Gemini API Key**:
-    - Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
-    - Sign in with your Google account.
-    - Click **"Create API key in new project"** and copy the generated key.
-
-2.  **Create an Environment File**:
-    - In the root of the project, create a new file named `.env`.
-    - Add the following line to the file, replacing `YOUR_API_KEY` with the key you just copied:
-      ```
-      GEMINI_API_KEY=YOUR_API_KEY
-      ```
-
-### 2. Install Dependencies
-
-Open your terminal, navigate to the project directory, and run the following command to install the necessary packages:
-
-```bash
-npm install
-```
-
-### 3. Run the Development Server
-
-Once the dependencies are installed, you can start the local development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## How to Deploy to Vercel
-
-This project is optimized for deployment on Vercel.
-
-1.  **Push to GitHub**: Make sure your project code is pushed to a GitHub repository.
-2.  **Import to Vercel**: Sign up or log in to [Vercel](https://vercel.com/) with your GitHub account and import the repository.
-3.  **Configure Environment Variables**: In the Vercel project settings, navigate to **Settings > Environment Variables** and add your `GEMINI_API_KEY` with the same name and value as you did in your `.env` file.
-4.  **Deploy**: Vercel will automatically detect the Next.js framework and deploy your application. Any subsequent pushes to the `main` branch will trigger automatic redeployments.
+- **Framework**: [Next.js](https://nextjs.org/) using the App Router for a fast, server-centric architecture.
+- **AI Integration**: [Firebase Genkit](https://firebase.google.com/docs/genkit) powered by Google's Gemini models to provide intelligent features like personalized message generation.
+- **UI Components**: [ShadCN UI](https://ui.shadcn.com/) for a set of beautifully designed, accessible, and composable components.
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for a utility-first CSS framework that allows for rapid UI development.
