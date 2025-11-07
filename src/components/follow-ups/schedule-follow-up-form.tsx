@@ -28,10 +28,8 @@ import {
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
 import {
   Command,
@@ -50,7 +48,6 @@ const formSchema = z.object({
   contact: z.object({
       id: z.string(),
       name: z.string(),
-      photoURL: z.string().optional(),
       phone: z.string(),
     }).nullable().refine(val => val !== null, { message: 'You must select a contact.' }),
   message: z.string().min(10, { message: 'Message is too short.' }),
@@ -59,27 +56,21 @@ const formSchema = z.object({
 });
 
 type ScheduleFollowUpFormProps = {
-  onFinished: () => void;
+  onFinished: (followUp: FollowUp) => void;
   initialData?: FollowUp | null;
+  contacts: Contact[];
 };
 
 
 export function ScheduleFollowUpForm({
   onFinished,
   initialData,
+  contacts
 }: ScheduleFollowUpFormProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const { user } = useUserContext();
+  const { userProfile } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
-
-  const contactsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'contacts'), where('ownerId', '==', user.uid));
-  }, [firestore, user]);
-
-  const { data: contacts, isLoading: isLoadingContacts } = useCollection<Contact>(contactsQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,11 +89,10 @@ export function ScheduleFollowUpForm({
                   id: contact.id, 
                   name: contact.name, 
                   phone: contact.phone,
-                  photoURL: `https://picsum.photos/seed/${contact.id}/40/40`
                 } : null,
               message: initialData.message,
-              scheduledForDate: initialData.scheduledFor.toDate(),
-              scheduledForTime: format(initialData.scheduledFor.toDate(), 'HH:mm'),
+              scheduledForDate: initialData.scheduledFor,
+              scheduledForTime: format(initialData.scheduledFor, 'HH:mm'),
           });
       } else {
         form.reset({
@@ -135,60 +125,30 @@ export function ScheduleFollowUpForm({
     }
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user || !values.contact) return;
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!userProfile || !values.contact) return;
     setIsSubmitting(true);
     
     const [hours, minutes] = values.scheduledForTime.split(':').map(Number);
     const scheduledDateTime = new Date(values.scheduledForDate);
     scheduledDateTime.setHours(hours, minutes);
 
-    const followUpData = {
+    const followUpData: FollowUp = {
+      id: initialData ? initialData.id : Date.now().toString(),
       contactId: values.contact.id,
       contactName: values.contact.name,
       contactAvatar: `https://picsum.photos/seed/${values.contact.id}/40/40`,
       message: values.message,
-      scheduledFor: Timestamp.fromDate(scheduledDateTime),
+      scheduledFor: scheduledDateTime,
       status: 'Scheduled',
-      creatorId: user.uid,
+      creatorId: userProfile.uid,
     };
     
-    try {
-        if (initialData) {
-            // Update existing document
-            const followUpRef = doc(firestore, 'scheduled_follow_ups', initialData.id);
-            const updateData = {
-                ...followUpData,
-                status: initialData.status, // Keep original status when editing
-            };
-            await updateDoc(followUpRef, updateData).catch(err => {
-                 const permissionError = new FirestorePermissionError({
-                    path: followUpRef.path,
-                    operation: 'update',
-                    requestResourceData: updateData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-            toast({ title: 'Follow-up Updated!', description: `The scheduled message for ${values.contact.name} has been updated.` });
-        } else {
-            // Create new document
-            const followUpsCollection = collection(firestore, 'scheduled_follow_ups');
-            await addDoc(followUpsCollection, followUpData).catch(err => {
-                 const permissionError = new FirestorePermissionError({
-                    path: followUpsCollection.path,
-                    operation: 'create',
-                    requestResourceData: followUpData,
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            });
-            toast({ title: 'Follow-up Scheduled!', description: `A message for ${values.contact.name} is scheduled for ${scheduledDateTime.toLocaleDateString()}.` });
-        }
-        onFinished();
-    } catch (error) {
-        console.error(error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not save the follow-up.' });
+    // Simulate network delay
+    setTimeout(() => {
+        onFinished(followUpData);
         setIsSubmitting(false);
-    }
+    }, 500);
   }
 
   return (
@@ -212,7 +172,7 @@ export function ScheduleFollowUpForm({
                       )}
                       disabled={!!initialData}
                     >
-                      {field.value ? field.value.name : 'Select a contact'}
+                      {field.value ? contacts.find(c => c.id === field.value?.id)?.name : 'Select a contact'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -221,7 +181,7 @@ export function ScheduleFollowUpForm({
                   <Command>
                     <CommandInput placeholder="Search contacts..." />
                     <CommandEmpty>
-                        {isLoadingContacts ? 'Loading contacts...' : 'No contacts found.'}
+                        {'No contacts found.'}
                     </CommandEmpty>
                     <CommandGroup>
                       {contacts?.map(c => (
@@ -232,8 +192,7 @@ export function ScheduleFollowUpForm({
                             form.setValue('contact', {
                                 id: c.id,
                                 name: c.name,
-                                phone: c.phone,
-                                photoURL: `https://picsum.photos/seed/${c.id}/40/40`
+                                phone: c.phone
                             });
                           }}
                         >

@@ -1,81 +1,42 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { useDoc } from '@/firebase/firestore/use-doc';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { UserProfile } from '@/lib/data';
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 interface UserContextType {
-  user: ReturnType<typeof useUser>['user'];
   userProfile: UserProfile | null;
   loading: boolean;
-  forceRefresh: () => Promise<void>;
+  setUserProfile: (profile: UserProfile | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isUserLoading: isAuthLoading } = useUser();
-  const firestore = useFirestore();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
-  const userDocRef = useMemoFirebase(() => (user && firestore ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
-  const { data: userProfile, isLoading: isProfileLoading, setData: setUserProfile } = useDoc<UserProfile>(userDocRef);
-
-  const [globalLoading, setGlobalLoading] = useState(true);
-
-  const forceRefresh = useCallback(async () => {
-    if (userDocRef) {
-        const freshDoc = await getDoc(userDocRef);
-        if (freshDoc.exists()) {
-            setUserProfile({ ...freshDoc.data() as UserProfile, id: freshDoc.id });
-        }
-    }
-  }, [userDocRef, setUserProfile]);
-
   useEffect(() => {
-    const isAuthPage = ['/login', '/role-selection'].includes(pathname);
+    // This is a simplified auth check for a client-side prototype.
+    // In a real app, you'd check a token or session.
+    const isAuthPage = ['/role-selection'].includes(pathname);
 
-    // Stay on the current page if we're still determining auth state
-    if (isAuthLoading) {
-      setGlobalLoading(true);
-      return;
-    }
-
-    // If no user and not on a public auth page, redirect to login
-    if (!user && !isAuthPage) {
-      router.push('/login');
-      return;
-    }
-    
-    // If there is a user but we are still waiting for their profile
-    if (user && isProfileLoading) {
-        setGlobalLoading(true);
-        return;
-    }
-
-    // If user exists but has no role, and is not on role selection, redirect there
-    if (user && !userProfile && pathname !== '/role-selection') {
+    if (!userProfile && !isAuthPage) {
+      // If there's no user and we're not on the role selection page, go there.
       router.push('/role-selection');
-      return;
-    }
-
-    // If user has a profile and is on an auth page, redirect to dashboard
-    if (user && userProfile && isAuthPage) {
+    } else if (userProfile && isAuthPage) {
+      // If there IS a user and we're on the role selection page, go to the dashboard.
       router.push('/dashboard');
-      return;
+    } else {
+      // In all other cases (user on an app page, or no user on the role page), loading is done.
+      setLoading(false);
     }
+  }, [userProfile, pathname, router]);
 
-    // If none of the above, loading is complete
-    setGlobalLoading(false);
-
-  }, [user, userProfile, isAuthLoading, isProfileLoading, pathname, router]);
-
-  if (globalLoading) {
+  if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -84,7 +45,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <UserContext.Provider value={{ user, userProfile, loading: globalLoading, forceRefresh }}>
+    <UserContext.Provider value={{ userProfile, loading, setUserProfile }}>
       {children}
     </UserContext.Provider>
   );

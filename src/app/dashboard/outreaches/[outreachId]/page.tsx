@@ -2,17 +2,15 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useParams } from 'next/navigation';
-import { Calendar, HeartHandshake, MapPin, Users, Check, Clock, PlusCircle, Loader2, Pencil } from 'lucide-react';
+import { Calendar, HeartHandshake, MapPin, Users, Clock, PlusCircle, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Header from '@/components/layout/header';
-import { useFirestore, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { doc, collection, query, where, documentId, addDoc, updateDoc } from 'firebase/firestore';
-import { useDoc, useCollection } from '@/firebase';
 import type { UserProfile } from '@/lib/data';
+import { outreachEvents, leaderboard } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import React from 'react';
@@ -27,7 +25,7 @@ import { useUserContext } from '@/context/user-context';
 import { CreateOutreachForm } from '@/components/outreach/create-outreach-form';
 
 export type OutreachEvent = {
-  id: string;
+  id: number;
   title: string;
   date: string;
   location: string;
@@ -35,9 +33,10 @@ export type OutreachEvent = {
   status: 'Planned' | 'Ongoing' | 'Completed';
   participantIds: string[];
   coordinatorId: string;
+  newConverts?: NewConvert[];
 };
 
-type NewConvert = {
+export type NewConvert = {
   id: string;
   name: string;
   phone: string;
@@ -47,23 +46,24 @@ type NewConvert = {
 };
 
 const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
-    const firestore = useFirestore();
+    const [participants, setParticipants] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    const participantsQuery = useMemoFirebase(() => {
-        if (!firestore || !participantIds || participantIds.length === 0) return null;
-        return query(collection(firestore, 'users'), where(documentId(), 'in', participantIds));
-    }, [firestore, participantIds]);
-
-    const { data: participants, isLoading } = useCollection<UserProfile>(participantsQuery);
+    React.useEffect(() => {
+        // Simulate fetching participants
+        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(String(u.id)));
+        setParticipants(fetchedParticipants);
+        setIsLoading(false);
+    }, [participantIds]);
 
     if (isLoading) return <Skeleton className="h-10 w-full" />;
 
     return (
         <div className="flex flex-wrap gap-4">
             {participants?.map((p) => (
-                <div key={p.uid} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                <div key={p.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
                     <Avatar className="h-8 w-8 border-2 border-background">
-                        <AvatarImage src={p.photoURL} data-ai-hint="person face" />
+                        <AvatarImage src={p.avatar} data-ai-hint="person face" />
                         <AvatarFallback>{p.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium">{p.name}</span>
@@ -74,9 +74,14 @@ const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) 
 };
 
 const AssignedReacher = ({ reacherId }: { reacherId: string }) => {
-    const firestore = useFirestore();
-    const reacherRef = useMemoFirebase(() => firestore ? doc(firestore, 'users', reacherId) : null, [firestore, reacherId]);
-    const { data: reacher, isLoading } = useDoc<UserProfile>(reacherRef);
+    const [reacher, setReacher] = React.useState<any | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const foundReacher = leaderboard.find(u => String(u.id) === reacherId);
+        setReacher(foundReacher || null);
+        setIsLoading(false);
+    }, [reacherId]);
 
     if (isLoading) return <Skeleton className="h-5 w-24" />;
     return <span className="text-sm">{reacher?.name}</span>;
@@ -88,10 +93,9 @@ const addConvertSchema = z.object({
   notes: z.string().optional(),
 });
 
-const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onFinished: () => void }) => {
+const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onFinished: (newConvert: NewConvert) => void }) => {
     const { toast } = useToast();
-    const firestore = useFirestore();
-    const { user } = useUserContext();
+    const { userProfile } = useUserContext();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const form = useForm<z.infer<typeof addConvertSchema>>({
@@ -99,38 +103,23 @@ const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onF
         defaultValues: { name: '', phone: '', notes: '' }
     });
 
-    const onSubmit = async (values: z.infer<typeof addConvertSchema>) => {
-        if (!firestore || !user) return;
+    const onSubmit = (values: z.infer<typeof addConvertSchema>) => {
+        if (!userProfile) return;
         setIsSubmitting(true);
 
-        const newConvertData = {
+        const newConvertData: NewConvert = {
+            id: `nc_${Date.now()}`,
             ...values,
-            outreachId,
             status: 'Just Met',
-            assignedTo: user.uid, // Assign to the current user by default
-            createdAt: new Date().toISOString()
+            assignedTo: userProfile.uid,
         };
 
-        const convertsCollection = collection(firestore, 'outreaches', outreachId, 'new_converts');
-        
-        addDoc(convertsCollection, newConvertData)
-            .then(() => {
-                 toast({ title: "New Convert Added", description: `${values.name} has been recorded.` });
-                 onFinished();
-                 form.reset();
-            })
-            .catch(async (error) => {
-                const permissionError = new FirestorePermissionError({
-                    path: convertsCollection.path,
-                    operation: 'create',
-                    requestResourceData: newConvertData
-                });
-                errorEmitter.emit('permission-error', permissionError);
-                toast({ variant: 'destructive', title: "Error", description: "Could not add new convert." });
-            })
-            .finally(() => {
-                setIsSubmitting(false);
-            });
+        setTimeout(() => {
+            toast({ title: "New Convert Added", description: `${values.name} has been recorded.` });
+            onFinished(newConvertData);
+            form.reset();
+            setIsSubmitting(false);
+        }, 500);
     }
 
     return (
@@ -171,17 +160,23 @@ const AddNewConvertForm = ({ outreachId, onFinished }: { outreachId: string, onF
 export default function OutreachDetailPage() {
   const params = useParams();
   const { outreachId } = params as { outreachId: string };
-  const firestore = useFirestore();
+  const [event, setEvent] = React.useState<OutreachEvent | null | undefined>(undefined);
+  const [newConverts, setNewConverts] = React.useState<NewConvert[]>([]);
   const [isAddConvertOpen, setIsAddConvertOpen] = React.useState(false);
-  const { userProfile } = useUserContext();
 
-  const eventRef = useMemoFirebase(() => (firestore && outreachId ? doc(firestore, 'outreaches', outreachId) : null), [firestore, outreachId]);
-  const { data: event, isLoading: isLoadingEvent } = useDoc<OutreachEvent>(eventRef);
+  React.useEffect(() => {
+    // Simulate fetching data
+    const foundEvent = outreachEvents.find(e => String(e.id) === outreachId);
+    setEvent(foundEvent);
+    setNewConverts(foundEvent?.newConverts || []);
+  }, [outreachId]);
 
-  const convertsQuery = useMemoFirebase(() => (firestore && outreachId ? collection(firestore, 'outreaches', outreachId, 'new_converts') : null), [firestore, outreachId]);
-  const { data: newConverts, isLoading: isLoadingConverts } = useCollection<NewConvert>(convertsQuery);
-
-  if (isLoadingEvent) {
+  const handleNewConvertAdded = (newConvert: NewConvert) => {
+    setNewConverts(prev => [...prev, newConvert]);
+    setIsAddConvertOpen(false);
+  };
+  
+  if (event === undefined) {
     return (
       <div className="space-y-6">
         <Header pageTitle="Loading..." />
@@ -244,7 +239,7 @@ export default function OutreachDetailPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><HeartHandshake className="h-5 w-5" /> New Converts</span>
-              <span className="font-bold">{isLoadingConverts ? <Loader2 className="h-4 w-4 animate-spin" /> : newConverts?.length ?? 0}</span>
+              <span className="font-bold">{newConverts.length}</span>
             </div>
              <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><Clock className="h-5 w-5" /> Status</span>
@@ -288,15 +283,14 @@ export default function OutreachDetailPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <AddNewConvertForm 
-                    outreachId={outreachId} 
-                    onFinished={() => setIsAddConvertOpen(false)}
+                    outreachId={String(outreachId)} 
+                    onFinished={handleNewConvertAdded}
                 />
               </DialogContent>
             </Dialog>
         </CardHeader>
         <CardContent>
-            {isLoadingConverts && <div className="text-center p-8"><Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" /></div>}
-            {!isLoadingConverts && (!newConverts || newConverts.length === 0) ? (
+            {newConverts.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                     <p>No new converts have been recorded for this outreach yet.</p>
                 </div>

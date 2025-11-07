@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { Loader2, Shield, User, HelpCircle, FileText, Info, Camera, Code } from 'lucide-react';
 import {
@@ -23,7 +21,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import type { UserProfile } from '@/lib/data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { UpdateProfilePicture } from '@/components/settings/update-profile-picture';
@@ -39,15 +36,14 @@ const profileFormSchema = {
 
 
 export default function SettingsPage() {
-  const { user, userProfile, loading, forceRefresh } = useUserContext();
+  const { userProfile, loading, setUserProfile } = useUserContext();
   const { toast } = useToast();
-  const firestore = useFirestore();
   const [isSaving, setIsSaving] = useState(false);
   const [isPictureDialogOpen, setIsPictureDialogOpen] = useState(false);
   
-  const handleSaveChanges = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveChanges = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!user || !userProfile || !firestore) return;
+    if (!userProfile) return;
 
     setIsSaving(true);
     const formData = new FormData(event.currentTarget);
@@ -57,68 +53,47 @@ export default function SettingsPage() {
     const organization = formData.get('organization') as string;
 
     const updatedProfile = {
+      ...userProfile,
       name,
       photoURL,
       phone,
       organization,
     };
     
-    try {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, updatedProfile, { merge: true });
-
-      await forceRefresh();
-
-      toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been successfully updated.',
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to update profile. Please try again.',
-      });
-    } finally {
+    setTimeout(() => {
+        setUserProfile(updatedProfile as UserProfile);
         setIsSaving(false);
-    }
-  };
-
-  const handleRoleChange = async (newRole: UserProfile['role']) => {
-    if (!user || !userProfile || !firestore || userProfile.role === newRole) return;
-    
-    try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, { role: newRole }, { merge: true });
-        await forceRefresh();
         toast({
-            title: "Role Updated",
-            description: `Your role has been changed to ${newRole}.`
+            title: 'Profile Updated',
+            description: 'Your profile has been successfully updated.',
         });
-    } catch (error) {
-         console.error('Error updating role:', error);
-         toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to update your role. Please try again.',
-         });
-    }
+    }, 500);
   };
 
-  const handleProfilePictureUpdate = async (newPhotoUrl: string) => {
-    // This function is temporarily disabled to prevent Firestore errors.
-    // The correct implementation requires Firebase Storage, which is not yet set up.
+  const handleRoleChange = (newRole: UserProfile['role']) => {
+    if (!userProfile || userProfile.role === newRole) return;
+    
+    setUserProfile({ ...userProfile, role: newRole });
     toast({
-        title: 'Feature Coming Soon',
-        description: 'Profile picture saving will be enabled soon. For now, this is just a preview.',
+        title: "Role Updated",
+        description: `Your role has been changed to ${newRole}. The sidebar will now update.`
     });
-    // The state update in UpdateProfilePicture will still show the preview.
+  };
+
+  const handleProfilePictureUpdate = (newPhotoUrl: string) => {
+    if (!userProfile) return;
+
+    setUserProfile({...userProfile, photoURL: newPhotoUrl});
+
+    toast({
+        title: 'Profile Picture Updated',
+        description: 'Your new profile picture has been set.',
+    });
     setIsPictureDialogOpen(false);
   };
 
 
-  if (loading || !userProfile || !user) {
+  if (loading || !userProfile) {
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold font-headline">Settings</h1>
@@ -187,7 +162,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" defaultValue={user.email || ''} disabled />
+                            <Input id="email" type="email" defaultValue={userProfile.email || ''} disabled />
                         </div>
                          <div className="grid gap-2">
                             <Label htmlFor="phone">Phone</Label>

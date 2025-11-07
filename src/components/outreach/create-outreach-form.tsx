@@ -21,24 +21,12 @@ import { Calendar } from '../ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useMemoFirebase } from '@/firebase';
-import { addDoc, collection, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
-import { useCollection } from '@/firebase/firestore/use-collection';
-import { UserProfile } from '@/lib/data';
+import { UserProfile, leaderboard } from '@/lib/data';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../ui/command';
 import { Badge } from '../ui/badge';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
+import type { OutreachEvent } from '@/app/dashboard/outreaches/[outreachId]/page';
 
-type OutreachEvent = {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  location: string;
-  participantIds: string[];
-};
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -49,21 +37,16 @@ const formSchema = z.object({
 });
 
 type CreateOutreachFormProps = {
-  onFinished: () => void;
+  onFinished: (event: OutreachEvent) => void;
   outreachToEdit?: OutreachEvent | null;
 };
 
 export function CreateOutreachForm({ onFinished, outreachToEdit }: CreateOutreachFormProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const { user, userProfile } = useUserContext();
+  const { userProfile } = useUserContext();
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const reachersQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'Reacher')) : null),
-    [firestore]
-  );
-  const { data: reachers, isLoading: isLoadingReachers } = useCollection<UserProfile>(reachersQuery);
+  const reachers = leaderboard.filter(u => String(u.id) !== userProfile?.uid); // Mock reachers
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,7 +56,7 @@ export function CreateOutreachForm({ onFinished, outreachToEdit }: CreateOutreac
           title: '',
           description: '',
           location: '',
-          participantIds: userProfile?.role === 'Supervisor' ? [user!.uid] : [],
+          participantIds: userProfile?.role === 'Supervisor' ? [userProfile!.uid] : [],
         },
   });
 
@@ -88,57 +71,37 @@ export function CreateOutreachForm({ onFinished, outreachToEdit }: CreateOutreac
   
   const selectedParticipantIds = form.watch('participantIds') || [];
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user) return;
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!userProfile) return;
     setIsSaving(true);
     
-    if (outreachToEdit) {
-        // Update existing outreach
-        const outreachRef = doc(firestore, 'outreaches', outreachToEdit.id);
-        const updateData = {
-            ...values,
-            date: values.date.toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-        await updateDoc(outreachRef, updateData).catch(err => {
-            const permissionError = new FirestorePermissionError({
-                path: outreachRef.path,
-                operation: 'update',
-                requestResourceData: updateData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
-        toast({ title: "Outreach Updated!", description: `${values.title} has been updated.` });
+    // Simulate network request
+    setTimeout(() => {
+        if (outreachToEdit) {
+            const updatedEvent: OutreachEvent = {
+                ...outreachToEdit,
+                ...values,
+                date: values.date.toISOString(),
+            };
+            onFinished(updatedEvent);
+            toast({ title: "Outreach Updated!", description: `${values.title} has been updated.` });
 
-    } else {
-        // Create new outreach
-        const finalParticipantIds = [...new Set([...values.participantIds, user.uid])];
-        const newOutreach = {
-            ...values,
-            date: values.date.toISOString(),
-            coordinatorId: user.uid,
-            participantIds: finalParticipantIds,
-            status: 'Planned',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-
-        const outreachesCollection = collection(firestore, 'outreaches');
-        await addDoc(outreachesCollection, newOutreach)
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-            path: outreachesCollection.path,
-            operation: 'create',
-            requestResourceData: newOutreach,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
-        
-        toast({ title: "Outreach Created!", description: `${values.title} has been scheduled.` });
-    }
-
-    setIsSaving(false);
-    onFinished();
+        } else {
+            const finalParticipantIds = [...new Set([...values.participantIds, userProfile.uid])];
+            const newOutreach: OutreachEvent = {
+                id: Date.now(), // simple unique id for demo
+                ...values,
+                date: values.date.toISOString(),
+                coordinatorId: userProfile.uid,
+                participantIds: finalParticipantIds,
+                status: 'Planned',
+                newConverts: [],
+            };
+            onFinished(newOutreach);
+            toast({ title: "Outreach Created!", description: `${values.title} has been scheduled.` });
+        }
+        setIsSaving(false);
+    }, 500);
   }
 
   return (
@@ -249,9 +212,9 @@ export function CreateOutreachForm({ onFinished, outreachToEdit }: CreateOutreac
                       )}
                     >
                        <div className="flex gap-1 flex-wrap">
-                        {reachers
-                          ?.filter(r => selectedParticipantIds.includes(r.uid))
-                          .map(r => <Badge variant="secondary" key={r.uid}>{r.name}</Badge>)
+                        {leaderboard
+                          ?.filter(r => selectedParticipantIds.includes(String(r.id)))
+                          .map(r => <Badge variant="secondary" key={r.id}>{r.name}</Badge>)
                         }
                         {selectedParticipantIds.length === 0 && 'Select Reachers...'}
                       </div>
@@ -267,19 +230,19 @@ export function CreateOutreachForm({ onFinished, outreachToEdit }: CreateOutreac
                       {reachers?.map((reacher) => (
                         <CommandItem
                           value={reacher.name}
-                          key={reacher.uid}
+                          key={reacher.id}
                           onSelect={() => {
                             const currentIds = field.value || [];
-                            const newIds = currentIds.includes(reacher.uid)
-                              ? currentIds.filter((id) => id !== reacher.uid)
-                              : [...currentIds, reacher.uid];
+                            const newIds = currentIds.includes(String(reacher.id))
+                              ? currentIds.filter((id) => id !== String(reacher.id))
+                              : [...currentIds, String(reacher.id)];
                             field.onChange(newIds);
                           }}
                         >
                           <Check
                             className={cn(
                               "mr-2 h-4 w-4",
-                              field.value?.includes(reacher.uid)
+                              field.value?.includes(String(reacher.id))
                                 ? "opacity-100"
                                 : "opacity-0"
                             )}

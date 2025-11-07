@@ -14,14 +14,16 @@ import {
 import { OutreachList } from '@/components/outreach/outreach-list';
 import { CreateOutreachForm } from '@/components/outreach/create-outreach-form';
 import { useUserContext } from '@/context/user-context';
-import { OutreachEvent } from './[outreachId]/page';
+import type { OutreachEvent } from './[outreachId]/page';
+import { outreachEvents as initialOutreachEvents } from '@/lib/data';
 
 export default function OutreachesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingOutreach, setEditingOutreach] = React.useState<OutreachEvent | null>(null);
   const { userProfile } = useUserContext();
-  
+  const [outreachEvents, setOutreachEvents] = React.useState(initialOutreachEvents);
+
   const handleOpenEditDialog = (outreach: OutreachEvent) => {
     setEditingOutreach(outreach);
     setIsEditDialogOpen(true);
@@ -31,6 +33,16 @@ export default function OutreachesPage() {
     setIsEditDialogOpen(false);
     setEditingOutreach(null);
   };
+
+  const handleCreateFinished = (newEvent: OutreachEvent) => {
+    setOutreachEvents(prev => [newEvent, ...prev]);
+    setIsCreateDialogOpen(false);
+  }
+  
+  const handleEditFinished = (updatedEvent: OutreachEvent) => {
+    setOutreachEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+    handleCloseEditDialog();
+  }
 
 
   return (
@@ -57,14 +69,15 @@ export default function OutreachesPage() {
                   Plan a new event to reach your community.
                 </DialogDescription>
               </DialogHeader>
-              <CreateOutreachForm onFinished={() => setIsCreateDialogOpen(false)} />
+              <CreateOutreachForm onFinished={handleCreateFinished} />
             </DialogContent>
           </Dialog>
         )}
       </div>
 
+      <OutreachList outreachEvents={outreachEvents} onEdit={handleOpenEditDialog} />
+      
       <Dialog open={isEditDialogOpen} onOpenChange={handleCloseEditDialog}>
-          <OutreachList onEdit={handleOpenEditDialog} />
           {editingOutreach && (
             <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
@@ -74,7 +87,7 @@ export default function OutreachesPage() {
                 </DialogDescription>
               </DialogHeader>
               <CreateOutreachForm
-                onFinished={handleCloseEditDialog}
+                onFinished={handleEditFinished}
                 outreachToEdit={editingOutreach}
               />
             </DialogContent>

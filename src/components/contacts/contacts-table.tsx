@@ -21,8 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { Dispatch, SetStateAction } from 'react';
 import { Contact } from '@/app/dashboard/contacts/page';
-import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 const statuses = ['New', 'Contacted', 'In Progress', 'Follow-up'];
 
@@ -37,52 +35,27 @@ const statusConfig: Record<Status, { variant: 'default' | 'secondary' | 'outline
 
 type ContactsTableProps = {
   contacts: Contact[];
-  setContacts: Dispatch<SetStateAction<Contact[] | null>>;
+  setContacts: Dispatch<SetStateAction<Contact[]>>;
   onEdit: (contact: Contact) => void;
 }
 
 export function ContactsTable({ contacts, setContacts, onEdit }: ContactsTableProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
 
   const handleStatusChange = (contactId: string, newStatus: string) => {
-    if (!firestore) return;
-    const contactRef = doc(firestore, 'contacts', contactId);
-    const updateData = { status: newStatus };
-    updateDoc(contactRef, updateData)
-      .then(() => {
-        toast({
-          title: 'Status Updated',
-          description: `Contact status changed to ${newStatus}.`,
-        });
-      })
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: contactRef.path,
-            operation: 'update',
-            requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    setContacts(prev => prev.map(c => c.id === contactId ? {...c, status: newStatus} : c));
+    toast({
+      title: 'Status Updated',
+      description: `Contact status changed to ${newStatus}.`,
+    });
   };
   
   const handleDelete = (contactId: string) => {
-    if(!firestore) return;
-    const contactRef = doc(firestore, 'contacts', contactId);
-    deleteDoc(contactRef)
-      .then(() => {
-        toast({
-          title: 'Contact Deleted',
-          description: 'The contact has been removed.',
-        });
-      })
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-            path: contactRef.path,
-            operation: 'delete',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
+    setContacts(prev => prev.filter(c => c.id !== contactId));
+    toast({
+      title: 'Contact Deleted',
+      description: 'The contact has been removed.',
+    });
   }
 
   return (

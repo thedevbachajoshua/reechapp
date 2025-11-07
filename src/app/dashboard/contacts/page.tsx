@@ -14,8 +14,7 @@ import {
 import { ContactsTable } from '@/components/contacts/contacts-table';
 import { AddContactForm, NewContact } from '@/components/contacts/add-contact-form';
 import { useUserContext } from '@/context/user-context';
-import { useFirestore, useCollection, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
-import { collection, query, where, addDoc, doc, setDoc } from 'firebase/firestore';
+import { contacts as initialContacts, UserProfile } from '@/lib/data';
 
 export type Contact = {
   id: string;
@@ -30,15 +29,19 @@ export type Contact = {
 export default function ContactsPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingContact, setEditingContact] = React.useState<Contact | null>(null);
-  const { user } = useUserContext();
-  const firestore = useFirestore();
+  const [contacts, setContacts] = React.useState<Contact[]>(initialContacts.map(c => ({...c, id: String(c.id)})));
+  const { userProfile } = useUserContext();
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const contactsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'contacts'), where('ownerId', '==', user.uid));
-  }, [firestore, user]);
-
-  const { data: contacts, isLoading, setData: setContacts } = useCollection<Contact>(contactsQuery);
+  React.useEffect(() => {
+    // Simulate loading
+    setTimeout(() => {
+      if (userProfile) {
+        setContacts(initialContacts.map(c => ({...c, id: String(c.id), ownerId: userProfile.uid })));
+      }
+      setIsLoading(false);
+    }, 500);
+  }, [userProfile]);
 
   const handleOpenEditDialog = (contact: Contact) => {
     setEditingContact(contact);
@@ -50,41 +53,20 @@ export default function ContactsPage() {
     setEditingContact(null);
   };
 
-  const handleSaveContact = async (contactData: NewContact, contactId?: string) => {
-    if (!firestore || !user) return;
+  const handleSaveContact = (contactData: NewContact, contactId?: string) => {
+    if (!userProfile) return;
     
     if (contactId) { // Editing existing contact
-      const contactRef = doc(firestore, 'contacts', contactId);
-      const updatedData = {
-        ...contactData,
-      };
-      setDoc(contactRef, updatedData, { merge: true })
-        .catch(async (serverError) => {
-            const permissionError = new FirestorePermissionError({
-                path: contactRef.path,
-                operation: 'update',
-                requestResourceData: updatedData,
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+      setContacts(prevContacts => prevContacts.map(c => c.id === contactId ? { ...c, ...contactData } : c));
     } else { // Adding new contact
-       const contactToAdd = {
+       const newContact: Contact = {
+        id: (contacts.length + 1).toString(),
         ...contactData,
         status: 'New',
         dateAdded: new Date().toISOString(),
-        ownerId: user.uid,
+        ownerId: userProfile.uid,
       };
-      
-      const contactsCollection = collection(firestore, 'contacts');
-      addDoc(contactsCollection, contactToAdd)
-          .catch(async (serverError) => {
-              const permissionError = new FirestorePermissionError({
-                  path: contactsCollection.path,
-                  operation: 'create',
-                  requestResourceData: contactToAdd,
-              });
-              errorEmitter.emit('permission-error', permissionError);
-          });
+      setContacts(prevContacts => [newContact, ...prevContacts]);
     }
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -22,24 +22,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import {
-  collection,
-  addDoc,
-  Timestamp,
-  query,
-  orderBy,
-  doc,
-  updateDoc,
-  where,
-  deleteDoc,
-} from 'firebase/firestore';
 import { ScheduleFollowUpForm } from '@/components/follow-ups/schedule-follow-up-form';
 import { useUserContext } from '@/context/user-context';
 import { Contact } from '@/app/dashboard/contacts/page';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
+import { followUps as initialFollowUps, contacts as mockContacts } from '@/lib/data';
 
 
 export type FollowUp = {
@@ -47,7 +36,7 @@ export type FollowUp = {
   contactName: string;
   contactId: string;
   contactAvatar: string;
-  scheduledFor: Timestamp;
+  scheduledFor: Date;
   message: string;
   status: 'Scheduled' | 'Sent' | 'Failed';
   creatorId: string;
@@ -57,27 +46,24 @@ export default function FollowUpsPage() {
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
-  const firestore = useFirestore();
   const { toast } = useToast();
-  const { user } = useUserContext();
+  const { userProfile } = useUserContext();
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const followUpsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, 'scheduled_follow_ups'),
-      where('creatorId', '==', user.uid),
-      orderBy('scheduledFor', 'desc')
-    );
-  }, [firestore, user]);
+  useEffect(() => {
+    // Simulate loading data
+    setIsLoading(true);
+    setTimeout(() => {
+        if(userProfile) {
+            setFollowUps(initialFollowUps.map(f => ({...f, scheduledFor: new Date(f.scheduledFor)})));
+            setContacts(mockContacts.map(c => ({...c, id: String(c.id)})));
+        }
+        setIsLoading(false);
+    }, 500);
+  }, [userProfile]);
 
-  const { data: followUps, isLoading } = useCollection<FollowUp>(followUpsQuery);
-
-  const contactsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'contacts'), where('ownerId', '==', user.uid));
-  }, [firestore, user]);
-
-  const { data: contacts } = useCollection<Contact>(contactsQuery);
   
   const handleOpenEditDialog = (followUp: FollowUp) => {
     setEditingFollowUp(followUp);
@@ -90,29 +76,17 @@ export default function FollowUpsPage() {
   };
   
   const handleDelete = (followUpId: string) => {
-      if (!firestore) return;
-      const followUpRef = doc(firestore, 'scheduled_follow_ups', followUpId);
-      deleteDoc(followUpRef)
-        .then(() => {
-            toast({ title: "Follow-up Deleted", description: "The scheduled message has been removed." });
-        })
-        .catch((error) => {
-            const permissionError = new FirestorePermissionError({
-                path: followUpRef.path,
-                operation: 'delete',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        });
+      setFollowUps(prev => prev.filter(f => f.id !== followUpId));
+      toast({ title: "Follow-up Deleted", description: "The scheduled message has been removed." });
   };
 
   const handleSendNow = async (followUp: FollowUp) => {
-    if (!firestore || !contacts) return;
+    if (!contacts) return;
     setSendingId(followUp.id);
   
     const contact = contacts.find(c => c.id === followUp.contactId);
   
     try {
-      // For the MVP, we just mark it as sent without calling an external API.
       const result = await sendFollowUpMessage({
         contactName: followUp.contactName,
         contactDetails: contact?.phone || 'No details', // Pass phone or some detail
@@ -123,18 +97,7 @@ export default function FollowUpsPage() {
         throw new Error(result.status);
       }
       
-      const followUpRef = doc(firestore, 'scheduled_follow_ups', followUp.id);
-      const updateData = { status: 'Sent' };
-      
-      await updateDoc(followUpRef, updateData).catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: followUpRef.path,
-          operation: 'update',
-          requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        throw permissionError;
-      });
+      setFollowUps(prev => prev.map(f => f.id === followUp.id ? {...f, status: 'Sent' } : f));
 
       toast({
         title: 'Message "Sent"!',
@@ -152,6 +115,18 @@ export default function FollowUpsPage() {
       setSendingId(null);
     }
   };
+  
+  const handleSaveFollowUp = (followUp: FollowUp) => {
+      const existing = followUps.find(f => f.id === followUp.id);
+      if(existing) {
+          setFollowUps(prev => prev.map(f => f.id === followUp.id ? followUp : f));
+          toast({ title: "Follow-up Updated!", description: `The message for ${followUp.contactName} has been updated.`});
+      } else {
+          setFollowUps(prev => [followUp, ...prev]);
+          toast({ title: "Follow-up Scheduled!", description: `A message for ${followUp.contactName} has been scheduled.`});
+      }
+      handleCloseFormDialog();
+  }
 
 
   return (
@@ -182,7 +157,7 @@ export default function FollowUpsPage() {
                 {editingFollowUp ? 'Update the details for this scheduled message.' : 'Select a contact, compose your message, and set a date and time.'}
               </DialogDescription>
             </DialogHeader>
-            <ScheduleFollowUpForm onFinished={handleCloseFormDialog} initialData={editingFollowUp} />
+            <ScheduleFollowUpForm onFinished={handleSaveFollowUp} initialData={editingFollowUp} contacts={contacts} />
           </DialogContent>
         </Dialog>
       </div>
@@ -206,7 +181,7 @@ export default function FollowUpsPage() {
                       {followUp.contactName}
                     </CardTitle>
                     <CardDescription>
-                      {followUp.scheduledFor.toDate().toLocaleString([], {
+                      {followUp.scheduledFor.toLocaleString([], {
                         dateStyle: 'medium',
                         timeStyle: 'short',
                       })}

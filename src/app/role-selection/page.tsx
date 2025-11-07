@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, User, Loader2 } from 'lucide-react';
@@ -17,46 +15,33 @@ export default function RoleSelectionPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
-  const { forceRefresh } = useUserContext();
+  const { setUserProfile } = useUserContext();
 
-  const handleRoleSelection = async () => {
-    if (!selectedRole || !auth.currentUser || !firestore) return;
+  const handleRoleSelection = () => {
+    if (!selectedRole) return;
     
     setIsSubmitting(true);
 
-    const userProfile = {
-      uid: auth.currentUser.uid,
-      email: auth.currentUser.email,
-      name: auth.currentUser.displayName || 'New User',
-      photoURL: auth.currentUser.photoURL || `https://picsum.photos/seed/${auth.currentUser.uid}/400/400`,
+    const simulatedUserProfile = {
+      uid: selectedRole === 'Supervisor' ? 'supervisor-001' : 'reacher-001',
+      email: selectedRole === 'Supervisor' ? 'supervisor@example.com' : 'reacher@example.com',
+      name: selectedRole === 'Supervisor' ? 'Supervisor Sam' : 'Reacher Rachel',
+      photoURL: `https://picsum.photos/seed/${selectedRole}/400/400`,
       role: selectedRole,
     };
     
-    try {
-      const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
-      await setDoc(userDocRef, userProfile, { merge: true });
-      
-      // Force the context to refetch the user profile
-      await forceRefresh();
+    // Simulate a network request
+    setTimeout(() => {
+      setUserProfile(simulatedUserProfile);
       
       toast({
         title: 'Role Selected',
-        description: `You are now a ${selectedRole}. Redirecting to dashboard...`,
+        description: `You are now viewing as a ${selectedRole}. Redirecting to dashboard...`,
       });
 
       router.push('/dashboard');
-    } catch (error) {
-      console.error('Error setting user role:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not set your role. Please try again.',
-      });
-      setIsSubmitting(false);
-    }
+    }, 500);
   };
 
   return (
@@ -64,7 +49,7 @@ export default function RoleSelectionPage() {
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle>Choose Your Role</CardTitle>
-          <CardDescription>Select how you will be using the REECH platform.</CardDescription>
+          <CardDescription>Select how you will be using the REECH platform for this demo.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
           <button

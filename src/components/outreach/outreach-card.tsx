@@ -1,16 +1,14 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, MapPin, Users, HeartHandshake, Pencil } from 'lucide-react';
 import { Button } from '../ui/button';
 import Link from 'next/link';
-import { UserProfile } from '@/lib/data';
-import { useCollection } from '@/firebase';
-import { collection, query, where, documentId, Firestore } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { UserProfile, leaderboard } from '@/lib/data';
 import { useUserContext } from '@/context/user-context';
 import type { OutreachEvent } from '@/app/dashboard/outreaches/[outreachId]/page';
+import React from 'react';
+import { Skeleton } from '../ui/skeleton';
 
 type OutreachCardProps = {
   event: OutreachEvent;
@@ -19,14 +17,15 @@ type OutreachCardProps = {
 
 
 const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
-  const firestore = useFirestore();
+    const [participants, setParticipants] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
 
-  const participantsQuery = useMemoFirebase(() => {
-    if (!firestore || !participantIds || participantIds.length === 0) return null;
-    return query(collection(firestore, 'users'), where(documentId(), 'in', participantIds));
-  }, [firestore, participantIds]);
-
-  const { data: participants, isLoading } = useCollection<UserProfile>(participantsQuery);
+    React.useEffect(() => {
+        // Simulate fetching participants
+        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(String(u.id)));
+        setParticipants(fetchedParticipants);
+        setIsLoading(false);
+    }, [participantIds]);
 
   if (isLoading) {
     return <div className="h-8 w-full animate-pulse bg-muted rounded-md" />;
@@ -39,8 +38,8 @@ const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) 
   return (
     <div className="flex items-center justify-center -space-x-2">
       {participants.slice(0, 5).map((p) => (
-        <Avatar key={p.uid} className="h-8 w-8 border-2 border-background">
-          <AvatarImage src={p.photoURL} data-ai-hint="person face" />
+        <Avatar key={p.id} className="h-8 w-8 border-2 border-background">
+          <AvatarImage src={p.avatar} data-ai-hint="person face" />
           <AvatarFallback>{p.name?.charAt(0)}</AvatarFallback>
         </Avatar>
       ))}
