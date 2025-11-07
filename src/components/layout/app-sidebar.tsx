@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -60,7 +59,7 @@ export default function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground p-1.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg p-1.5">
             {/* The logo is now an Image component pointing to /logo.png */}
             <Image src="/logo.png" alt="REECH Logo" width={24} height={24} />
           </div>
