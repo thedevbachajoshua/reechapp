@@ -49,14 +49,12 @@ export default function SettingsPage() {
     setIsSaving(true);
     const formData = new FormData(event.currentTarget);
     const name = formData.get('name') as string;
-    const photoURL = formData.get('photoURL') as string;
     const phone = formData.get('phone') as string;
     const organization = formData.get('organization') as string;
 
     const updatedProfile = {
       ...userProfile,
       name,
-      photoURL,
       phone,
       organization,
     };
@@ -150,10 +148,6 @@ export default function SettingsPage() {
                                 />
                             </DialogContent>
                         </Dialog>
-                      </div>
-                      <div className="grid w-full max-w-sm items-center gap-1.5">
-                          <Label htmlFor="photoURL">Profile Picture URL</Label>
-                          <Input id="photoURL" name="photoURL" type="url" defaultValue={userProfile.photoURL || ''} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
