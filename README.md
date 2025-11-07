@@ -1,46 +1,69 @@
 # REECH: Nurture - App Prototype
 
-This is a Next.js application built with Firebase Studio.
+This is a Next.js application built with Firebase Studio. It serves as a prototype for **REECH**, a platform designed to help church and outreach teams manage evangelism, follow-up, and nurture new believers with love and consistency.
 
-## How to Deploy This Application to Vercel
+## Tech Stack
 
-Vercel is a platform for hosting web applications that is highly optimized for Next.js. Follow these steps to get your site live in minutes.
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **AI Integration**: [Firebase Genkit](https://firebase.google.com/docs/genkit)
+- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Deployment**: [Vercel](https://vercel.com/)
 
-### Step 1: Push Your Code to a Git Provider
+## Key Features
 
-Vercel deploys directly from a Git repository. If you haven't already, you need to push your project to a provider like GitHub, GitLab, or Bitbucket.
+- **Role-Based Access**: Separate views and permissions for 'Supervisors' and 'Reachers'.
+- **Outreach Management**: Plan, create, and manage outreach events.
+- **Contact & Convert Tracking**: Add and manage contacts and new converts from outreach events.
+- **AI-Powered Assistance**:
+    - Generate personalized follow-up messages.
+    - Create encouraging messages with relevant scriptures.
+- **Discipleship Feed**: A space for team members to share devotional posts.
+- **Automated Follow-ups**: Schedule messages to be sent to contacts at a future date.
 
-1.  **Create a GitHub Repository**: Go to [GitHub](https://github.com) and create a new repository. Don't initialize it with a README or .gitignore, as you already have those files.
-2.  **Link and Push Your Project**: Follow the instructions on GitHub to push your existing local project to the newly created repository.
+## Getting Started
 
-### Step 2: Sign Up for Vercel
+To run this project locally, you will need to have Node.js and npm (or yarn/pnpm) installed on your machine.
 
-1.  Go to the [Vercel website](https://vercel.com/signup).
-2.  The easiest way to sign up is by using your **GitHub account**. This automatically connects Vercel to your repositories.
+### 1. Set Up Environment Variables
 
-### Step 3: Import Your Project in Vercel
+The application's AI features rely on the Gemini API. You will need to get an API key and make it available to the application.
 
-1.  Once you are signed in, you will be taken to your Vercel dashboard.
-2.  Click the **"Add New..."** button and select **"Project"**.
-3.  The "Import Git Repository" screen will appear. Find the GitHub repository you just created/pushed and click the **"Import"** button next to it.
-4.  If you don't see it, you may need to grant Vercel access to that specific repository through the GitHub integration settings.
+1.  **Get a Gemini API Key**:
+    - Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
+    - Sign in with your Google account.
+    - Click **"Create API key in new project"** and copy the generated key.
 
-### Step 4: Configure Your Project
+2.  **Create an Environment File**:
+    - In the root of the project, create a new file named `.env`.
+    - Add the following line to the file, replacing `YOUR_API_KEY` with the key you just copied:
+      ```
+      GEMINI_API_KEY=YOUR_API_KEY
+      ```
 
-Vercel is smart and will automatically detect that you are deploying a Next.js application. The default settings are usually perfect.
+### 2. Install Dependencies
 
-The most important step here is to add your **Environment Variables**. Your app's AI features will not work without them.
+Open your terminal, navigate to the project directory, and run the following command to install the necessary packages:
 
-1.  In the configuration screen, find and expand the **"Environment Variables"** section.
-2.  You need to add one variable:
-    *   **Name**: `GEMINI_API_KEY`
-    *   **Value**: Paste your actual Gemini API key here. You can get one from [Google AI Studio](https://aistudio.google.com/app/apikey).
-3.  Click the **"Add"** button to save the variable.
+```bash
+npm install
+```
 
-### Step 5: Deploy!
+### 3. Run the Development Server
 
-1.  After adding the environment variable, simply click the **"Deploy"** button.
-2.  Vercel will now start building and deploying your application. You can watch the progress in the build logs.
-3.  Once it's finished (it usually takes a few minutes), you'll see a "Congratulations!" message with a preview of your live site.
+Once the dependencies are installed, you can start the local development server:
 
-That's it! Your REECH application is now live on the internet. Vercel will automatically redeploy your application every time you push new changes to your GitHub repository.
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## How to Deploy to Vercel
+
+This project is optimized for deployment on Vercel.
+
+1.  **Push to GitHub**: Make sure your project code is pushed to a GitHub repository.
+2.  **Import to Vercel**: Sign up or log in to [Vercel](https://vercel.com/) with your GitHub account and import the repository.
+3.  **Configure Environment Variables**: In the Vercel project settings, navigate to **Settings > Environment Variables** and add your `GEMINI_API_KEY` with the same name and value as you did in your `.env` file.
+4.  **Deploy**: Vercel will automatically detect the Next.js framework and deploy your application. Any subsequent pushes to the `main` branch will trigger automatic redeployments.
