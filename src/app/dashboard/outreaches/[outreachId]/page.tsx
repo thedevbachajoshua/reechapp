@@ -45,23 +45,24 @@ export type NewConvert = {
   notes: string;
 };
 
-const OutreachParticipants = ({ participantIds }: { participantIds: string[] }) => {
+const OutreachParticipants = ({ participantIds, coordinatorId }: { participantIds: string[], coordinatorId: string }) => {
     const [participants, setParticipants] = React.useState<any[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // Simulate fetching participants
-        const fetchedParticipants = leaderboard.filter(u => participantIds.includes(u.uid));
+        // Filter to show only reachers, not the coordinator
+        const reacherIds = participantIds.filter(id => id !== coordinatorId);
+        const fetchedParticipants = leaderboard.filter(u => reacherIds.includes(u.uid));
         setParticipants(fetchedParticipants);
         setIsLoading(false);
-    }, [participantIds]);
+    }, [participantIds, coordinatorId]);
 
     if (isLoading) return <Skeleton className="h-10 w-full" />;
 
     return (
         <div className="flex flex-wrap gap-4">
             {participants?.map((p) => (
-                <div key={p.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                <div key={p.uid} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
                     <Avatar className="h-8 w-8 border-2 border-background">
                         <AvatarImage src={p.avatar} data-ai-hint="person face" />
                         <AvatarFallback>{p.name?.charAt(0)}</AvatarFallback>
@@ -214,6 +215,8 @@ export default function OutreachDetailPage() {
     'Follow-up Scheduled': 'outline',
   };
 
+  const reacherCount = event.participantIds.filter(id => leaderboard.some(reacher => reacher.uid === id)).length;
+
 
   return (
     <>
@@ -237,7 +240,7 @@ export default function OutreachDetailPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5" /> Reachers</span>
-              <span className="font-bold">{event.participantIds.length}</span>
+              <span className="font-bold">{reacherCount}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2"><HeartHandshake className="h-5 w-5" /> New Converts</span>
@@ -257,7 +260,7 @@ export default function OutreachDetailPage() {
                 <CardDescription>Team members involved in this outreach.</CardDescription>
             </CardHeader>
             <CardContent>
-                <OutreachParticipants participantIds={event.participantIds} />
+                <OutreachParticipants participantIds={event.participantIds} coordinatorId={event.coordinatorId} />
             </CardContent>
         </Card>
       </div>

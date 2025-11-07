@@ -61,7 +61,7 @@ export function OutreachCard({ event, onEdit }: OutreachCardProps) {
     Completed: 'destructive',
   };
 
-  const reacherCount = event.participantIds.filter(id => id !== event.coordinatorId).length;
+  const reacherCount = event.participantIds.filter(id => leaderboard.some(reacher => reacher.uid === id)).length;
 
 
   return (
