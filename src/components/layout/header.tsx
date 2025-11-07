@@ -117,7 +117,7 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
             <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="md:hidden" />
-                    <div className="md:hidden flex items-center gap-2 font-bold font-headline">
+                    <div className="md:hidden flex items-center gap-2 font-bold font-headline text-lg">
                         <ReechLogo className="h-6 w-6 text-primary" />
                         REECH
                     </div>
@@ -132,7 +132,7 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
             <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
                  <div className="flex items-center gap-2">
                     <SidebarTrigger className="md:hidden" />
-                     <div className="md:hidden flex items-center gap-2 font-bold font-headline">
+                     <div className="md:hidden flex items-center gap-2 font-bold font-headline text-lg">
                         <ReechLogo className="h-6 w-6 text-primary" />
                         REECH
                     </div>
