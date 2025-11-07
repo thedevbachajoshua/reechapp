@@ -25,6 +25,7 @@ import type { UserProfile } from '@/lib/data';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { UpdateProfilePicture } from '@/components/settings/update-profile-picture';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 
 
 const profileFormSchema = {
