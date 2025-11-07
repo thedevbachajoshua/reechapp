@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, Bot, Send, PlusCircle, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, Send, PlusCircle, Loader2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,11 +32,13 @@ import {
   doc,
   updateDoc,
   where,
+  deleteDoc,
 } from 'firebase/firestore';
 import { ScheduleFollowUpForm } from '@/components/follow-ups/schedule-follow-up-form';
-import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
 import { useUserContext } from '@/context/user-context';
 import { Contact } from '@/app/dashboard/contacts/page';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 export type FollowUp = {
@@ -47,19 +49,21 @@ export type FollowUp = {
   scheduledFor: Timestamp;
   message: string;
   status: 'Scheduled' | 'Sent' | 'Failed';
+  creatorId: string;
 };
 
 export default function FollowUpsPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const firestore = useFirestore();
   const { toast } = useToast();
   const { user } = useUserContext();
 
   const followUpsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'scheduled_follow_ups'), orderBy('scheduledFor', 'desc'));
-  }, [firestore]);
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'scheduled_follow_ups'), where('creatorId', '==', user.uid), orderBy('scheduledFor', 'desc'));
+  }, [firestore, user]);
 
   const { data: followUps, isLoading } = useCollection<FollowUp>(followUpsQuery);
 
@@ -69,32 +73,41 @@ export default function FollowUpsPage() {
   }, [firestore, user]);
 
   const { data: contacts } = useCollection<Contact>(contactsQuery);
+  
+  const handleOpenEditDialog = (followUp: FollowUp) => {
+    setEditingFollowUp(followUp);
+    setIsFormDialogOpen(true);
+  };
+
+  const handleCloseFormDialog = () => {
+    setEditingFollowUp(null);
+    setIsFormDialogOpen(false);
+  };
+  
+  const handleDelete = (followUpId: string) => {
+      if (!firestore) return;
+      const followUpRef = doc(firestore, 'scheduled_follow_ups', followUpId);
+      deleteDoc(followUpRef)
+        .then(() => {
+            toast({ title: "Follow-up Deleted", description: "The scheduled message has been removed." });
+        })
+        .catch((error) => {
+            const permissionError = new FirestorePermissionError({
+                path: followUpRef.path,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        });
+  };
 
   const handleSendNow = async (followUp: FollowUp) => {
     if (!firestore) return;
     setSendingId(followUp.id);
 
-    const contact = contacts?.find(c => c.id === followUp.contactId);
-    if (!contact) {
-      toast({
-        variant: 'destructive',
-        title: 'Contact not found',
-        description: 'The contact for this follow-up could not be found.',
-      });
-      setSendingId(null);
-      return;
-    }
+    // Simulate sending the message
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     try {
-      // For the MVP, we call the AI, but it won't actually send an SMS.
-      // It just generates the message and returns a "Sent" status.
-      const result = await sendFollowUpMessage({
-        contactName: contact.name,
-        contactDetails: `Follow-up for: ${followUp.message}`,
-        outreachTitle: 'a scheduled follow-up',
-      });
-
-      // Since the flow now simulates success, we can directly update Firestore.
       const followUpRef = doc(firestore, 'scheduled_follow_ups', followUp.id);
       const updateData = { status: 'Sent' };
       
@@ -105,7 +118,7 @@ export default function FollowUpsPage() {
           requestResourceData: updateData,
         });
         errorEmitter.emit('permission-error', permissionError);
-        throw permissionError; // throw it to be caught by the outer catch
+        throw permissionError;
       });
 
       toast({
@@ -136,7 +149,10 @@ export default function FollowUpsPage() {
             Manage and automate your follow-up messages.
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isFormDialogOpen} onOpenChange={(isOpen) => {
+            if (!isOpen) handleCloseFormDialog();
+            else setIsFormDialogOpen(true);
+        }}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -145,12 +161,12 @@ export default function FollowUpsPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>Schedule a New Follow-up</DialogTitle>
+              <DialogTitle>{editingFollowUp ? 'Edit Follow-up' : 'Schedule a New Follow-up'}</DialogTitle>
               <DialogDescription>
-                Select a contact, compose your message, and set a date and time for it to be sent.
+                {editingFollowUp ? 'Update the details for this scheduled message.' : 'Select a contact, compose your message, and set a date and time.'}
               </DialogDescription>
             </DialogHeader>
-            <ScheduleFollowUpForm onFinished={() => setIsDialogOpen(false)} />
+            <ScheduleFollowUpForm onFinished={handleCloseFormDialog} initialData={editingFollowUp} />
           </DialogContent>
         </Dialog>
       </div>
@@ -180,15 +196,52 @@ export default function FollowUpsPage() {
                       })}
                     </CardDescription>
                   </div>
-                  <Avatar className="h-10 w-10 border">
-                    <AvatarImage
-                      src={followUp.contactAvatar}
-                      data-ai-hint="person face"
-                    />
-                    <AvatarFallback>
-                      {followUp.contactName.substring(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
+                   <div className="flex items-center">
+                    <Avatar className="h-10 w-10 border">
+                        <AvatarImage
+                        src={followUp.contactAvatar}
+                        data-ai-hint="person face"
+                        />
+                        <AvatarFallback>
+                        {followUp.contactName.substring(0, 2)}
+                        </AvatarFallback>
+                    </Avatar>
+                     {followUp.status === 'Scheduled' && (
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 ml-2">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenEditDialog(followUp)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                <span>Edit</span>
+                            </DropdownMenuItem>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        <span>Delete</span>
+                                    </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the scheduled follow-up.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(followUp.id)}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    )}
+                   </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">

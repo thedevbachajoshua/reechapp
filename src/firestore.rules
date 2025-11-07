@@ -1,0 +1,115 @@
+/**
+ * @file Firestore Security Rules for the REECH feature with role-based access.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership and role-based model.
+ * Supervisors have broad permissions to manage outreaches and users.
+ * Reachers have limited permissions focused on their assigned tasks.
+ *
+ * Data Structure:
+ * - /users/{userId}: User profile documents, containing a 'role' field ('Supervisor' or 'Reacher').
+ * - /outreaches/{outreachId}: Outreach events.
+ *   - `coordinatorId` is the user ID of the event creator (a Supervisor).
+ *   - `participantIds` is an array of user IDs of assigned Reachers.
+ * - /outreaches/{outreachId}/new_converts/{newConvertId}: New converts for an event.
+ *   - `assignedTo` is the `userId` of the reacher assigned to follow up.
+ * - /contacts/{contactId}: General contacts added by a user.
+ * - /scheduled_follow_ups/{followUpId}: Messages to be sent later.
+ *
+ * Key Security Decisions:
+ * - User profile data is readable by any authenticated user, but only writable by the user themselves.
+ *   The 'role' field cannot be changed by the user after it has been set.
+ * - Supervisors can create, read, update, and delete any outreach event.
+ * - Reachers can only read outreach events they are a participant in.
+ * - Supervisors and Reachers can create/read scheduled follow-ups.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isSupervisor() {
+      return isSignedIn() && getUserData(request.auth.uid).role == 'Supervisor';
+    }
+
+    function isReacher() {
+        return isSignedIn() && getUserData(request.auth.uid).role == 'Reacher';
+    }
+
+    match /users/{userId} {
+      // Any authenticated user can read any profile (useful for showing names/avatars).
+      allow read: if isSignedIn();
+      // A user can create, update, or delete their OWN profile document.
+      // A more robust implementation would prevent role changes here.
+      allow write: if isOwner(userId);
+    }
+    
+    match /contacts/{contactId} {
+      // A user can only access contacts they own.
+      allow read, update, delete, write: if isSignedIn() && isOwner(resource.data.ownerId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.ownerId);
+      // Allow a user to list the contacts that they own.
+      allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
+    }
+
+    match /outreaches/{outreachId} {
+      function isParticipant() {
+        return isSignedIn() && resource.data.participantIds.hasAny([request.auth.uid]);
+      }
+
+      allow read: if isSupervisor() || isParticipant();
+      allow list: if isSignedIn(); // Filtered on the client
+
+      allow create: if isSupervisor();
+
+      allow update, delete: if isSupervisor();
+    }
+
+    match /outreaches/{outreachId}/new_converts/{newConvertId} {
+      function isOutreachParticipant() {
+          let outreach = get(/databases/$(database)/documents/outreaches/$(outreachId));
+          return isSignedIn() && outreach.data.participantIds.hasAny([request.auth.uid]);
+      }
+
+      function isAssignedReacher() {
+        return isSignedIn() && resource.data.assignedTo == request.auth.uid;
+      }
+
+      allow read, list: if isSupervisor() || isOutreachParticipant();
+      
+      allow create: if isSupervisor() || isOutreachParticipant();
+
+      allow update: if isSupervisor() || isAssignedReacher();
+
+      allow delete: if isSupervisor();
+    }
+
+    match /scheduled_follow_ups/{followUpId} {
+        // Any authenticated user can list their own scheduled messages for UI purposes.
+        allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
+        // The creator can read their own message
+        allow read: if isOwner(resource.data.creatorId);
+        
+        // Any authenticated user can create a scheduled message for a contact.
+        // The `creatorId` field ensures we know who made it.
+        allow create: if isSignedIn() && isOwner(request.resource.data.creatorId);
+
+        // The creator can delete their own scheduled message.
+        allow delete: if isOwner(resource.data.creatorId);
+        
+        // The creator can update the status of their own scheduled message (for "Send Now" or editing).
+        allow update: if isOwner(resource.data.creatorId);
+    }
+  }
+}

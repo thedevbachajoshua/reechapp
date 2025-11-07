@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,10 +28,10 @@ import {
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { addDoc, collection, Timestamp, query, where } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase, useCollection, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { addDoc, collection, Timestamp, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useUserContext } from '@/context/user-context';
 import {
   Command,
@@ -43,6 +43,7 @@ import {
 import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
 import { Input } from '../ui/input';
 import { Contact } from '@/app/dashboard/contacts/page';
+import { FollowUp } from '@/app/dashboard/follow-ups/page';
 
 
 const formSchema = z.object({
@@ -59,11 +60,13 @@ const formSchema = z.object({
 
 type ScheduleFollowUpFormProps = {
   onFinished: () => void;
+  initialData?: FollowUp | null;
 };
 
 
 export function ScheduleFollowUpForm({
   onFinished,
+  initialData,
 }: ScheduleFollowUpFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -86,6 +89,30 @@ export function ScheduleFollowUpForm({
       scheduledForTime: '09:00',
     },
   });
+
+  useEffect(() => {
+      if (initialData && contacts) {
+          const contact = contacts.find(c => c.id === initialData.contactId);
+          form.reset({
+              contact: contact ? { 
+                  id: contact.id, 
+                  name: contact.name, 
+                  phone: contact.phone,
+                  photoURL: `https://picsum.photos/seed/${contact.id}/40/40`
+                } : null,
+              message: initialData.message,
+              scheduledForDate: initialData.scheduledFor.toDate(),
+              scheduledForTime: format(initialData.scheduledFor.toDate(), 'HH:mm'),
+          });
+      } else {
+        form.reset({
+          contact: null,
+          message: '',
+          scheduledForDate: undefined,
+          scheduledForTime: '09:00',
+        });
+      }
+  }, [initialData, contacts, form]);
 
   const handleGenerateAiMessage = async () => {
     const contact = form.getValues('contact');
@@ -116,7 +143,7 @@ export function ScheduleFollowUpForm({
     const scheduledDateTime = new Date(values.scheduledForDate);
     scheduledDateTime.setHours(hours, minutes);
 
-    const newFollowUp = {
+    const followUpData = {
       contactId: values.contact.id,
       contactName: values.contact.name,
       contactAvatar: `https://picsum.photos/seed/${values.contact.id}/40/40`,
@@ -125,24 +152,42 @@ export function ScheduleFollowUpForm({
       status: 'Scheduled',
       creatorId: user.uid,
     };
-
+    
     try {
-      const followUpsCollection = collection(firestore, 'scheduled_follow_ups');
-      await addDoc(followUpsCollection, newFollowUp);
-
-      toast({
-        title: 'Follow-up Scheduled!',
-        description: `A message for ${values.contact.name} is scheduled for ${scheduledDateTime.toLocaleDateString()}.`,
-      });
-      onFinished();
+        if (initialData) {
+            // Update existing document
+            const followUpRef = doc(firestore, 'scheduled_follow_ups', initialData.id);
+            const updateData = {
+                ...followUpData,
+                status: initialData.status, // Keep original status when editing
+            };
+            await updateDoc(followUpRef, updateData).catch(err => {
+                 const permissionError = new FirestorePermissionError({
+                    path: followUpRef.path,
+                    operation: 'update',
+                    requestResourceData: updateData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+            toast({ title: 'Follow-up Updated!', description: `The scheduled message for ${values.contact.name} has been updated.` });
+        } else {
+            // Create new document
+            const followUpsCollection = collection(firestore, 'scheduled_follow_ups');
+            await addDoc(followUpsCollection, followUpData).catch(err => {
+                 const permissionError = new FirestorePermissionError({
+                    path: followUpsCollection.path,
+                    operation: 'create',
+                    requestResourceData: followUpData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            });
+            toast({ title: 'Follow-up Scheduled!', description: `A message for ${values.contact.name} is scheduled for ${scheduledDateTime.toLocaleDateString()}.` });
+        }
+        onFinished();
     } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not schedule follow-up.',
-      });
-      setIsSubmitting(false);
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not save the follow-up.' });
+        setIsSubmitting(false);
     }
   }
 
@@ -165,6 +210,7 @@ export function ScheduleFollowUpForm({
                         'w-full justify-between',
                         !field.value && 'text-muted-foreground'
                       )}
+                      disabled={!!initialData}
                     >
                       {field.value ? field.value.name : 'Select a contact'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -306,7 +352,7 @@ export function ScheduleFollowUpForm({
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Schedule
+            {initialData ? 'Save Changes' : 'Schedule Follow-up'}
           </Button>
         </div>
       </form>
