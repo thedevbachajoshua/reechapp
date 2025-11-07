@@ -1,4 +1,3 @@
-
 'use client';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
@@ -41,7 +40,7 @@ function BreadcrumbGenerator({ pathname, pageTitle }: { pathname: string, pageTi
         <Breadcrumb className="hidden md:flex">
             <BreadcrumbList>
                  <BreadcrumbItem>
-                    {isOutreachDetailPage ? (
+                    {isDetailPage ? (
                         <BreadcrumbLink asChild>
                             <Link href="/dashboard/outreaches">Outreaches</Link>
                         </BreadcrumbLink>
@@ -50,7 +49,7 @@ function BreadcrumbGenerator({ pathname, pageTitle }: { pathname: string, pageTi
                     )}
                 </BreadcrumbItem>
                 
-                 {isOutreachDetailPage && title && (
+                 {isDetailPage && title && (
                     <>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
@@ -72,7 +71,15 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
              <div className="flex items-center gap-2">
                 <SidebarTrigger className="md:hidden" />
                  <div className="md:hidden flex items-center gap-2 font-bold font-headline text-2xl">
-                    <Image src="/logo.png" alt="REECH Logo" width={40} height={40} />
+                    <Image 
+                        src="/logo.png" 
+                        alt="REECH Logo" 
+                        width={40} 
+                        height={40}
+                        style={{
+                            filter: 'brightness(0) saturate(100%) invert(80%) sepia(52%) saturate(4788%) hue-rotate(3deg) brightness(106%) contrast(101%)'
+                        }}
+                    />
                     REECH
                 </div>
                 <BreadcrumbGenerator pathname={pathname} pageTitle={pageTitle} />
