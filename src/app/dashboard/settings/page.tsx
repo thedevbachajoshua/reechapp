@@ -122,11 +122,10 @@ export default function SettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="flex items-center gap-6">
-                      <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-4">
                         <Avatar className="h-24 w-24">
-                          <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
-                          <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.name} data-ai-hint="person face" />
+                        <AvatarFallback>{userProfile.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <Dialog open={isPictureDialogOpen} onOpenChange={setIsPictureDialogOpen}>
                             <DialogTrigger asChild>
@@ -148,7 +147,6 @@ export default function SettingsPage() {
                                 />
                             </DialogContent>
                         </Dialog>
-                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="grid gap-2">
