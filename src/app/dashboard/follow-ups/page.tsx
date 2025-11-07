@@ -39,6 +39,7 @@ import { useUserContext } from '@/context/user-context';
 import { Contact } from '@/app/dashboard/contacts/page';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { sendFollowUpMessage } from '@/ai/flows/send-follow-up';
 
 
 export type FollowUp = {
@@ -62,7 +63,11 @@ export default function FollowUpsPage() {
 
   const followUpsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, 'scheduled_follow_ups'), where('creatorId', '==', user.uid), orderBy('scheduledFor', 'desc'));
+    return query(
+      collection(firestore, 'scheduled_follow_ups'), 
+      where('creatorId', '==', user.uid), 
+      orderBy('scheduledFor', 'desc')
+    );
   }, [firestore, user]);
 
   const { data: followUps, isLoading } = useCollection<FollowUp>(followUpsQuery);
@@ -101,13 +106,23 @@ export default function FollowUpsPage() {
   };
 
   const handleSendNow = async (followUp: FollowUp) => {
-    if (!firestore) return;
+    if (!firestore || !contacts) return;
     setSendingId(followUp.id);
-
-    // Simulate sending the message
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
+  
+    const contact = contacts.find(c => c.id === followUp.contactId);
+  
     try {
+      // For the MVP, we just mark it as sent without calling an external API.
+      const result = await sendFollowUpMessage({
+        contactName: followUp.contactName,
+        contactDetails: contact?.phone || 'No details', // Pass phone or some detail
+        outreachTitle: "a REECH outreach event" // Placeholder
+      });
+
+      if (result.status.startsWith('Failed')) {
+        throw new Error(result.status);
+      }
+      
       const followUpRef = doc(firestore, 'scheduled_follow_ups', followUp.id);
       const updateData = { status: 'Sent' };
       
@@ -123,7 +138,7 @@ export default function FollowUpsPage() {
 
       toast({
         title: 'Message "Sent"!',
-        description: 'The follow-up has been marked as sent in the system.',
+        description: 'The follow-up has been marked as sent for this MVP.',
       });
 
     } catch (error) {
@@ -137,6 +152,7 @@ export default function FollowUpsPage() {
       setSendingId(null);
     }
   };
+
 
   return (
     <div className="space-y-6">

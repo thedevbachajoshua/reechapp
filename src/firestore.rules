@@ -56,11 +56,11 @@ service cloud.firestore {
     }
     
     match /contacts/{contactId} {
-      // A user can only access contacts they own.
+      // A user can only read/write/delete contacts they own.
       allow read, update, delete, write: if isSignedIn() && isOwner(resource.data.ownerId);
       allow create: if isSignedIn() && isOwner(request.resource.data.ownerId);
       // Allow a user to list the contacts that they own.
-      allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
+      allow list: if isSignedIn() && request.query.where.find(r => r[0] == "ownerId" && r[1] == "==" && r[2] == request.auth.uid) != null;
     }
 
     match /outreaches/{outreachId} {
@@ -96,9 +96,10 @@ service cloud.firestore {
     }
 
     match /scheduled_follow_ups/{followUpId} {
-        // Any authenticated user can list their own scheduled messages for UI purposes.
-        allow list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
-        // The creator can read their own message
+        // A user can list only their OWN scheduled messages.
+        allow list: if isSignedIn() && request.query.where.find(r => r[0] == "creatorId" && r[1] == "==" && r[2] == request.auth.uid) != null;
+        
+        // The creator can read their own message.
         allow read: if isOwner(resource.data.creatorId);
         
         // Any authenticated user can create a scheduled message for a contact.
