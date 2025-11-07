@@ -130,9 +130,9 @@ export const stats = [
   export const outreachEvents = [
     {
         id: 1,
-        title: 'Community Cookout',
+        title: 'Accra for Christ',
         date: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString(), // 2 weeks from now
-        location: 'City Park',
+        location: 'Independence Square',
         status: 'Planned' as 'Planned' | 'Ongoing' | 'Completed',
         participantIds: ['supervisor-001', 'reacher-001', 'reacher-003'],
         coordinatorId: 'supervisor-001',
@@ -140,9 +140,9 @@ export const stats = [
     },
     {
         id: 2,
-        title: 'Campus Outreach',
+        title: 'Legon Campus Connect',
         date: new Date().toISOString(), // Today
-        location: 'University Plaza',
+        location: 'University of Ghana',
         status: 'Ongoing' as 'Planned' | 'Ongoing' | 'Completed',
         participantIds: ['supervisor-001', 'reacher-001', 'reacher-005', 'reacher-006'],
         coordinatorId: 'supervisor-001',
@@ -155,9 +155,9 @@ export const stats = [
     },
     {
         id: 3,
-        title: 'Homeless Shelter Visit',
+        title: 'Madina Market Outreach',
         date: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString(), // 1 month ago
-        location: 'Downtown Shelter',
+        location: 'Madina Central Market',
         status: 'Completed' as 'Planned' | 'Ongoing' | 'Completed',
         participantIds: ['supervisor-001', 'reacher-001'],
         coordinatorId: 'supervisor-001',
