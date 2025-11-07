@@ -51,7 +51,7 @@ export default function LoginPage() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <ReechLogo className="h-8 w-8" />
           </div>
-          <h1 className="text-4xl font-bold text-foreground font-headline">REECH</h1>
+          <h1 className="text-5xl font-bold text-foreground font-headline">REECH</h1>
           <p className="text-muted-foreground">Sign in as a Supervisor or Reacher to continue.</p>
         </div>
         <LoginForm />

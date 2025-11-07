@@ -51,7 +51,7 @@ const ReechLogo = (props: React.SVGProps<SVGSVGElement>) => (
     >
       <path d="M4 14.899A7 7 0 1 1 15 8.5V11a.5.5 0 0 1-1 0V8.29a5 5 0 0 0-10 2.29"/>
       <path d="M4 21.5V17a3 3 0 0 1 3-3h5a3 3 0 0 1 3 3v4.5"/>
-      <path d="M12 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/>
+      <path d="M12 12a2-2 0 1 0 4 0 2 2 0 0 0-4 0Z"/>
       <path d="M16 11.5a2.5 2.5 0 0 1 3.54 0L22 14"/>
     </svg>
 );
@@ -84,7 +84,7 @@ export default function AppSidebar() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <ReechLogo className="h-6 w-6" />
           </div>
-          <span className="font-bold text-xl font-headline">REECH</span>
+          <span className="font-bold text-2xl font-headline">REECH</span>
         </div>
       </SidebarHeader>
 

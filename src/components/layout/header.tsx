@@ -35,7 +35,7 @@ const ReechLogo = (props: React.SVGProps<SVGSVGElement>) => (
       strokeLinejoin="round" 
       {...props}
     >
-      <path d="M4 14.899A7 7 0 1 1 15 8.5V11a.5.5 0 0 1-1_0V8.29a5 5 0 0 0-10 2.29"/>
+      <path d="M4 14.899A7 7 0 1 1 15 8.5V11a.5.5 0 0 1-1 0V8.29a5 5 0 0 0-10 2.29"/>
       <path d="M4 21.5V17a3 3 0 0 1 3-3h5a3 3 0 0 1 3 3v4.5"/>
       <path d="M12 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z"/>
       <path d="M16 11.5a2.5 2.5 0 0 1 3.54 0L22 14"/>
@@ -117,7 +117,7 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
             <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
                 <div className="flex items-center gap-2">
                     <SidebarTrigger className="md:hidden" />
-                    <div className="md:hidden flex items-center gap-2 font-bold font-headline text-lg">
+                    <div className="md:hidden flex items-center gap-2 font-bold font-headline text-2xl">
                         <ReechLogo className="h-6 w-6 text-primary" />
                         REECH
                     </div>
@@ -132,7 +132,7 @@ export default function Header({ pageTitle }: { pageTitle?: string}) {
             <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
                  <div className="flex items-center gap-2">
                     <SidebarTrigger className="md:hidden" />
-                     <div className="md:hidden flex items-center gap-2 font-bold font-headline text-lg">
+                     <div className="md:hidden flex items-center gap-2 font-bold font-headline text-2xl">
                         <ReechLogo className="h-6 w-6 text-primary" />
                         REECH
                     </div>
