@@ -3,6 +3,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from "@/components/ui/toaster";
 import { UserProvider } from '@/context/user-context';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'REACH',
@@ -33,6 +34,7 @@ export default function RootLayout({
           {children}
         </UserProvider>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );
